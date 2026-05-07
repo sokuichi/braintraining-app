@@ -1013,6 +1013,7 @@
         document.body.classList.toggle("motion-low", state.settings.lowMotion);
         document.body.dataset.density = String(state.settings.density);
         document.body.dataset.theme = state.settings.theme || "classic";
+        document.body.dataset.view = currentView;
         document.documentElement.style.setProperty("--density", state.settings.density);
         $("#settingSfx").checked = state.settings.sfx;
         $("#settingCursor").checked = state.settings.customCursor;
@@ -1071,14 +1072,21 @@
       function setView(view) {
         const previousView = currentView;
         currentView = view;
+        document.body.classList.remove("view-shift");
+        void document.body.offsetWidth;
+        document.body.classList.add("view-shift");
+        window.clearTimeout(setView.transitionTimer);
+        setView.transitionTimer = window.setTimeout(() => document.body.classList.remove("view-shift"), 560);
         $$(".view").forEach((panel) => panel.classList.remove("is-active"));
         const nextPanel = $(`#view-${view}`);
         if (!nextPanel) {
           showToast(`Unknown view: ${view}`);
           currentView = previousView;
+          document.body.classList.remove("view-shift");
           return;
         }
         nextPanel.classList.add("is-active");
+        document.body.dataset.view = view;
         $$(".nav-btn").forEach((button) => button.classList.toggle("is-active", button.dataset.view === view));
         if (previousView !== view) playSfx("select");
         const titles = {
