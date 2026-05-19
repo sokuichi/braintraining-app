@@ -1,0 +1,6642 @@
+      const domCache = new Map();
+      const $ = (selector) => {
+        if (selector.startsWith("#") && !selector.includes(" ")) {
+          if (!domCache.has(selector)) domCache.set(selector, document.querySelector(selector));
+          return domCache.get(selector);
+        }
+        return document.querySelector(selector);
+      };
+      const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+      const STORAGE_KEY = "smart101TrainingStateV4";
+
+      const moduleInfo = {
+        aim: {
+          label: "Aim Trainer",
+          short: "Aim",
+          code: "AIM",
+          view: "aim",
+          skill: "reaction control",
+          quest: "Complete one aim round",
+          description: "Adaptive target drills for reaction, accuracy, and mouse control."
+        },
+        questions: {
+          label: "Question Gym",
+          short: "Logic",
+          code: "QST",
+          view: "questions",
+          skill: "reasoning",
+          quest: "Finish one generated quiz",
+          description: "Generated sequences, arithmetic, analogy, logic, and pattern questions."
+        },
+        memory: {
+          label: "Memory Lab",
+          short: "Memory",
+          code: "MEM",
+          view: "memory",
+          skill: "working memory",
+          quest: "Complete one n-back stream",
+          description: "Adaptive n-back trials for updating, monitoring, and recall precision."
+        },
+        focus: {
+          label: "Focus Switch",
+          short: "Focus",
+          code: "FCS",
+          view: "focus",
+          skill: "attention control",
+          quest: "Complete one Stroop set",
+          description: "Color-word conflict drills for inhibition and response control."
+        },
+        creativity: {
+          label: "Creative Sprint",
+          short: "Ideas",
+          code: "CRT",
+          view: "creativity",
+          skill: "divergent thinking",
+          quest: "Score one idea sprint",
+          description: "Divergent thinking drills with targets for volume and variety."
+        },
+        analogy: {
+          label: "Transfer Lab",
+          short: "Transfer",
+          code: "TRN",
+          view: "analogy",
+          skill: "analogical thinking",
+          quest: "Submit one mapping",
+          description: "Far-domain analogy mapping for creative problem solving."
+        },
+        spatial: {
+          label: "Spatial Lab",
+          short: "Spatial",
+          code: "SPC",
+          view: "spatial",
+          skill: "spatial reasoning",
+          quest: "Complete one spatial transform set",
+          description: "Mental rotation, mirror, and translation chains with exact coordinate scoring."
+        },
+        calibration: {
+          label: "Calibration Lab",
+          short: "Calibrate",
+          code: "CAL",
+          view: "calibration",
+          skill: "metacognition",
+          quest: "Complete one confidence set",
+          description: "Evidence questions with confidence scoring, calibration error, and feedback."
+        },
+        systems: {
+          label: "Systems Lab",
+          short: "Systems",
+          code: "SYS",
+          view: "systems",
+          skill: "systems reasoning",
+          quest: "Complete one complex systems set",
+          description: "Causal graphs, Bayesian updates, proof chains, and scheduling optimizers."
+        },
+        rint: {
+          label: "Relational N-Back",
+          short: "RINT",
+          code: "RNB",
+          view: "rint",
+          skill: "relational working memory",
+          quest: "Complete one relational n-back stream",
+          description: "RINT n-back: compare abstract relation graphs across N-back load, distractors, and mixed task switching."
+        },
+        rrt: {
+          label: "Relational Reasoning",
+          short: "RRT",
+          code: "RRT",
+          view: "rrt",
+          skill: "relational integration",
+          quest: "Complete one relational reasoning block",
+          description: "Research-backed relation training: frames, analogies, transitive inference, and matrix rules."
+        }
+      };
+
+      const visualThemes = {
+        geist: "Geist Lab",
+        classic: "Classic Courier",
+        matrix: "Matrix",
+        neon: "Neon",
+        contrast: "Contrast"
+      };
+      const visualThemeIds = Object.keys(visualThemes);
+      const colorModes = {
+        identity: "Identity palette",
+        hue: "Hue based",
+        code: "Code based",
+        hash: "Hash based"
+      };
+      const colorModeIds = Object.keys(colorModes);
+      const IDENTITY_VERSION = "geist-rint-v1";
+
+      const defaultState = {
+        xp: 0,
+        sessions: 0,
+        streak: 1,
+        lastVisit: "",
+        questDate: "",
+        quests: {},
+        progression: {
+          mastery: 0,
+          trainingPower: 0,
+          peakRank: "Novice"
+        },
+        settings: {
+          sfx: true,
+          volume: 0.35,
+          customCursor: true,
+          lowMotion: false,
+          adaptive: true,
+          usePortedData: true,
+          guiMode: "regular",
+          density: 1,
+          hardMode: true,
+          problemDepth: 2,
+          sessionLoad: 1,
+          vfx: 2,
+          theme: "geist",
+          colorMode: "identity",
+          colorHue: 142,
+          colorCode: "#8fe3a1",
+          colorHash: "brain.exe",
+          difficultyCap: 10,
+          answerTimerScale: 1,
+          trialCountScale: 1,
+          lurePressure: 1,
+          identityVersion: IDENTITY_VERSION
+        },
+        modules: {
+          aim: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          questions: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          memory: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, mode: "dual", pace: 1, lure: 1, interference: true, lastNote: "Ready" },
+          focus: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          creativity: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          analogy: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          spatial: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          calibration: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, lastNote: "Ready" },
+          systems: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, mode: "mixed", lastNote: "Ready" },
+          rint: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, stage: "calibration", nMin: 2, nMax: 4, relationSet: "all", tokenMode: "mixed", switchMode: "rint", distractors: false, lastNote: "Ready" },
+          rrt: { difficulty: 1, xp: 0, sessions: 0, best: 0, recent: [], mastery: 0, mode: "evidence", protocol: "eight-week", lastNote: "Ready" }
+        },
+        history: [],
+        eventLog: [],
+        ported: {
+          updatedAt: "",
+          entries: [],
+          summary: {}
+        }
+      };
+
+      let state = loadState();
+      let currentView = "dashboard";
+      let creativeMethod = "diverge";
+
+      const aimRound = {
+        active: false,
+        duration: 22,
+        remaining: 0,
+        hits: 0,
+        misses: 0,
+        streak: 0,
+        best: 0,
+        goal: 10,
+        targetLife: 1450,
+        targetSize: 76,
+        tickTimer: 0,
+        moveTimer: 0
+      };
+
+      const quiz = {
+        active: false,
+        answered: 0,
+        correct: 0,
+        target: 6,
+        current: null,
+        locked: false
+      };
+
+      const creative = {
+        active: false,
+        seconds: 75,
+        remaining: 0,
+        timer: 0,
+        prompt: ""
+      };
+
+      const memory = {
+        active: false,
+        n: 1,
+        mode: "dual",
+        trial: 0,
+        total: 12,
+        correct: 0,
+        channelCorrect: 0,
+        channelTotal: 0,
+        sequence: [],
+        current: null,
+        answered: false,
+        selected: new Set(),
+        timer: 0
+      };
+
+      const memoryModes = {
+        dual: {
+          label: "Dual",
+          grid: 3,
+          channels: ["symbol", "position"],
+          description: "Symbol plus 2D grid position."
+        },
+        multi: {
+          label: "Multi-pos",
+          grid: 4,
+          channels: ["symbol", "position", "color"],
+          description: "Larger positional field with color binding."
+        },
+        manipulation: {
+          label: "Stimuli",
+          grid: 4,
+          channels: ["symbol", "position", "color", "transform"],
+          description: "Stimuli manipulation n-back: compare symbol, position, color, and transform rules."
+        },
+        quad: {
+          label: "Quad",
+          grid: 5,
+          channels: ["symbol", "position", "color", "transform"],
+          description: "Large spatial field, color, symbol, and transform channel."
+        }
+      };
+
+      const focus = {
+        active: false,
+        trial: 0,
+        total: 12,
+        correct: 0,
+        reactionTotal: 0,
+        currentColor: "",
+        shownAt: 0,
+        answered: false,
+        timer: 0
+      };
+
+      const spatial = {
+        active: false,
+        answered: 0,
+        correct: 0,
+        target: 6,
+        current: null,
+        locked: false
+      };
+
+      const calibration = {
+        active: false,
+        answered: 0,
+        correct: 0,
+        target: 5,
+        confidenceTotal: 0,
+        brierTotal: 0,
+        current: null,
+        locked: false,
+        selected: ""
+      };
+
+      const systems = {
+        active: false,
+        answered: 0,
+        correct: 0,
+        target: 6,
+        current: null,
+        locked: false,
+        mode: "mixed"
+      };
+
+      const rrt = {
+        active: false,
+        answered: 0,
+        correct: 0,
+        target: 6,
+        current: null,
+        locked: false,
+        mode: "evidence",
+        startTime: 0
+      };
+
+      const rint = {
+        active: false,
+        trial: 0,
+        total: 18,
+        correct: 0,
+        hits: 0,
+        falseAlarms: 0,
+        misses: 0,
+        missedResponses: 0,
+        correctRejects: 0,
+        n: 2,
+        stage: "calibration",
+        current: null,
+        sequence: [],
+        categoryStats: {},
+        timer: 0,
+        startTime: 0,
+        locked: false
+      };
+
+      const audio = {
+        ctx: null,
+        armed: false
+      };
+
+      const vfx = {
+        canvas: null,
+        ctx: null,
+        particles: [],
+        running: false,
+        frame: 0,
+        colorTheme: "",
+        colors: null
+      };
+
+      const terminal = {
+        booted: false,
+        history: [],
+        historyIndex: -1,
+        commands: []
+      };
+
+      const pointerState = {
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        targetX: window.innerWidth / 2,
+        targetY: window.innerHeight / 2,
+        visible: false,
+        frame: 0,
+        mode: ""
+      };
+
+      const uiFx = {
+        firstRender: true,
+        previousLevel: 0,
+        previousXpPercent: null,
+        dashboardCounterRun: new Set(),
+        activeModule: ""
+      };
+
+      const answerTimer = {
+        active: false,
+        module: "",
+        startedAt: 0,
+        duration: 0,
+        remaining: 0,
+        timeout: 0,
+        frame: 0,
+        onExpire: null
+      };
+
+      const analogySources = [
+        { domain: "jazz improvisation", distance: "near", structures: ["timing", "feedback", "variation"] },
+        { domain: "skateboarding lines", distance: "near", structures: ["flow", "risk", "recovery"] },
+        { domain: "restaurant prep", distance: "near", structures: ["mise en place", "batching", "service pressure"] },
+        { domain: "city traffic", distance: "medium", structures: ["routing", "signals", "bottlenecks"] },
+        { domain: "weather systems", distance: "medium", structures: ["pressure", "fronts", "forecasting"] },
+        { domain: "escape rooms", distance: "medium", structures: ["clues", "locks", "team roles"] },
+        { domain: "immune systems", distance: "far", structures: ["detection", "memory", "response"] },
+        { domain: "coral reefs", distance: "far", structures: ["symbiosis", "niches", "resilience"] },
+        { domain: "space mission control", distance: "far", structures: ["checklists", "telemetry", "abort criteria"] }
+      ];
+
+      const promptParts = {
+        diverge: [
+          "Generate many ways to train focus in under five minutes.",
+          "List unusual uses for a timer, a target, and a notebook.",
+          "Invent tiny games that make learning feel like aim practice.",
+          "Create training rules that reward calm over speed.",
+          "Generate alternative interfaces for practicing difficult things daily.",
+          "List methods to make feedback feel useful instead of judgmental."
+        ],
+        constraint: [
+          "Design a creativity drill using only one button and three words.",
+          "Make a training idea that works without a scoreboard.",
+          "Build a daily practice that must fit inside 90 seconds.",
+          "Remove the most obvious feature from a study app and replace it.",
+          "Make a training task that works with no text labels.",
+          "Design a session that gets easier when the user slows down."
+        ],
+        combine: [
+          "Combine aim training with memory practice in a single mechanic.",
+          "Fuse a cooking timer with a creativity sprint.",
+          "Merge a rhythm game, a journal, and a quiz into one practice loop.",
+          "Combine chess puzzles with open-ended idea generation.",
+          "Fuse a workout plan with a question generator.",
+          "Combine analogies, reaction speed, and recall into one drill."
+        ]
+      };
+
+      const toastLayer = $("#toastLayer");
+
+      window.addEventListener("error", (event) => {
+        console.error(event.error || event.message);
+        showToast("App recovered from an error. Check console for details.");
+      });
+
+      window.addEventListener("unhandledrejection", (event) => {
+        console.error(event.reason);
+        showToast("Async task failed safely.");
+      });
+
+      function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function safeString(value, fallback = "", maxLength = 240) {
+        const text = typeof value === "string" ? value : fallback;
+        return text.slice(0, maxLength);
+      }
+
+      function normalizeHue(value, fallback = 42) {
+        const raw = Number(value);
+        if (!Number.isFinite(raw)) return fallback;
+        return Math.round(((raw % 360) + 360) % 360);
+      }
+
+      function normalizeHexColor(value, fallback = "#c8a958") {
+        let text = safeString(value, fallback, 16).trim();
+        if (!text) text = fallback;
+        if (!text.startsWith("#")) text = `#${text}`;
+        const short = text.match(/^#([0-9a-f]{3})$/i);
+        if (short) {
+          const expanded = short[1].split("").map((char) => char + char).join("");
+          return `#${expanded.toLowerCase()}`;
+        }
+        const full = text.match(/^#([0-9a-f]{6})$/i);
+        return full ? `#${full[1].toLowerCase()}` : fallback;
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#39;"
+        })[char]);
+      }
+
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function finiteNumber(value, fallback, min = -Infinity, max = Infinity) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? clamp(parsed, min, max) : fallback;
+      }
+
+      function booleanValue(value, fallback) {
+        return typeof value === "boolean" ? value : fallback;
+      }
+
+      function portedSuggestedDifficulty(key) {
+        const summary = state?.ported?.summary?.[key];
+        if (!state?.settings?.usePortedData || !summary || summary.count < 1) return 0;
+        const avgDifficulty = finiteNumber(summary.avgDifficulty, 0, 0, 10);
+        const avgScore = finiteNumber(summary.avgScore, 0, 0, 1);
+        if (avgDifficulty) return clamp(Math.round(avgDifficulty), 1, 10);
+        return clamp(Math.round(2 + avgScore * 7), 1, 10);
+      }
+
+      function moduleDifficulty(key) {
+        const base = state?.modules?.[key]?.difficulty || defaultState.modules[key]?.difficulty || 1;
+        const hardBonus = state?.settings?.hardMode ? 2 : 0;
+        const ported = portedSuggestedDifficulty(key);
+        const cap = Math.round(finiteNumber(state?.settings?.difficultyCap, 10, 3, 12));
+        return clamp(Math.max(base + hardBonus, ported), 1, cap);
+      }
+
+      function sessionLoadMultiplier() {
+        const load = [0.85, 1, 1.25][state?.settings?.sessionLoad] || 1;
+        const trialScale = finiteNumber(state?.settings?.trialCountScale, 1, 0.7, 1.55);
+        return load * trialScale;
+      }
+
+      function problemDepth() {
+        return clamp(Number(state?.settings?.problemDepth) || 2, 1, 3);
+      }
+
+      function sample(items) {
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      function shuffle(items) {
+        const copy = [...items];
+        for (let i = copy.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      }
+
+      function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function yesterdayKey() {
+        const date = new Date();
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().slice(0, 10);
+      }
+
+      function deepMerge(base, saved) {
+        const output = clone(base);
+        if (!saved || typeof saved !== "object") return output;
+        Object.keys(saved).forEach((key) => {
+          if (["__proto__", "prototype", "constructor"].includes(key)) return;
+          if (saved[key] && typeof saved[key] === "object" && !Array.isArray(saved[key]) && output[key]) {
+            output[key] = deepMerge(output[key], saved[key]);
+          } else {
+            output[key] = saved[key];
+          }
+        });
+        return output;
+      }
+
+      function sanitizeHistoryEntry(entry) {
+        if (!entry || !moduleInfo[entry.module]) return null;
+        return {
+          module: entry.module,
+          label: safeString(entry.label, "Session", 160),
+          xp: Math.round(finiteNumber(entry.xp, 0, 0, 100000)),
+          success: Math.round(finiteNumber(entry.success, 0, 0, 100)),
+          difficulty: Math.round(finiteNumber(entry.difficulty, 1, 1, 10)),
+          previousDifficulty: Math.round(finiteNumber(entry.previousDifficulty, 1, 1, 10)),
+          time: safeString(entry.time, "", 80)
+        };
+      }
+
+      function sanitizeLogEntry(entry) {
+        if (!entry || typeof entry !== "object") return null;
+        return {
+          time: safeString(entry.time, new Date().toLocaleString(), 80),
+          kind: safeString(entry.kind, "event", 36),
+          message: safeString(entry.message, "Training event", 180),
+          detail: safeString(entry.detail, "", 220)
+        };
+      }
+
+      function inferModuleFromText(value) {
+        const text = String(value || "").toLowerCase();
+        const hints = {
+          rint: ["rint", "relational n-back", "relational nback", "relational-nback", "relation n-back", "relation nback"],
+          rrt: ["rrt", "relational", "raven", "matrix", "matrices", "transitive", "relation", "analogy"],
+          aim: ["aim", "target", "reaction", "mouse", "click"],
+          questions: ["quiz", "logic", "question", "math", "sequence", "deduction"],
+          memory: ["memory", "nback", "n-back", "dual", "working memory"],
+          focus: ["focus", "stroop", "attention", "inhibition", "switch"],
+          creativity: ["creative", "divergent", "idea", "fluency"],
+          analogy: ["transfer", "mapping", "analogical"],
+          spatial: ["spatial", "rotation", "coordinate", "mental rotation"],
+          calibration: ["calibration", "confidence", "metacognition"],
+          systems: ["systems", "causal", "bayes", "bayesian", "proof", "schedule"]
+        };
+        const direct = moduleKeyFromInput(text.trim());
+        if (direct) return direct;
+        return Object.keys(hints).find((key) => hints[key].some((hint) => text.includes(hint))) || "questions";
+      }
+
+      function sanitizePortedEntry(entry) {
+        if (!entry || typeof entry !== "object") return null;
+        const module = moduleInfo[entry.module] ? entry.module : inferModuleFromText([entry.module, entry.source, entry.label, entry.type].join(" "));
+        return {
+          module,
+          source: safeString(entry.source, "external", 80),
+          label: safeString(entry.label, moduleInfo[module].label, 120),
+          score: finiteNumber(entry.score, 0, 0, 1),
+          difficulty: Math.round(finiteNumber(entry.difficulty, 0, 0, 10)),
+          time: safeString(entry.time, "", 80),
+          type: safeString(entry.type, "import", 50)
+        };
+      }
+
+      function rebuildPortedSummary(entries) {
+        return entries.reduce((summary, entry) => {
+          if (!summary[entry.module]) {
+            summary[entry.module] = { count: 0, avgScore: 0, avgDifficulty: 0, lastSource: "" };
+          }
+          const item = summary[entry.module];
+          item.count += 1;
+          item.avgScore += entry.score;
+          item.avgDifficulty += entry.difficulty || 0;
+          item.lastSource = entry.source;
+          return summary;
+        }, {});
+      }
+
+      function finalizePortedSummary(summary) {
+        Object.keys(summary).forEach((key) => {
+          const item = summary[key];
+          item.avgScore = item.count ? item.avgScore / item.count : 0;
+          item.avgDifficulty = item.count ? item.avgDifficulty / item.count : 0;
+        });
+        return summary;
+      }
+
+      function sanitizePortedData(ported) {
+        const entries = Array.isArray(ported?.entries)
+          ? ported.entries.map(sanitizePortedEntry).filter(Boolean).slice(0, 500)
+          : [];
+        return {
+          updatedAt: safeString(ported?.updatedAt, "", 80),
+          entries,
+          summary: finalizePortedSummary(rebuildPortedSummary(entries))
+        };
+      }
+
+      function sanitizeState(nextState) {
+        nextState.xp = Math.round(finiteNumber(nextState.xp, 0, 0, 10000000));
+        nextState.sessions = Math.round(finiteNumber(nextState.sessions, 0, 0, 1000000));
+        nextState.streak = Math.round(finiteNumber(nextState.streak, 1, 1, 100000));
+        nextState.quests = nextState.quests && typeof nextState.quests === "object" ? nextState.quests : {};
+        nextState.settings = sanitizeSettings(nextState.settings);
+        nextState.modules = nextState.modules && typeof nextState.modules === "object" ? nextState.modules : {};
+        Object.keys(moduleInfo).forEach((key) => {
+          nextState.modules[key] = sanitizeModule(key, nextState.modules[key]);
+        });
+        nextState.history = Array.isArray(nextState.history)
+          ? nextState.history.map(sanitizeHistoryEntry).filter(Boolean).slice(0, 24)
+          : [];
+        nextState.eventLog = Array.isArray(nextState.eventLog)
+          ? nextState.eventLog.map(sanitizeLogEntry).filter(Boolean).slice(0, 120)
+          : [];
+        nextState.ported = sanitizePortedData(nextState.ported);
+        return nextState;
+      }
+
+      function sanitizeSettings(settings) {
+        const merged = deepMerge(defaultState.settings, settings && typeof settings === "object" ? settings : {});
+        return {
+          sfx: booleanValue(merged.sfx, defaultState.settings.sfx),
+          volume: finiteNumber(merged.volume, defaultState.settings.volume, 0, 1),
+          customCursor: booleanValue(merged.customCursor, defaultState.settings.customCursor),
+          lowMotion: booleanValue(merged.lowMotion, defaultState.settings.lowMotion),
+          adaptive: booleanValue(merged.adaptive, defaultState.settings.adaptive),
+          usePortedData: booleanValue(merged.usePortedData, defaultState.settings.usePortedData),
+          guiMode: ["simple", "regular", "complex"].includes(merged.guiMode) ? merged.guiMode : defaultState.settings.guiMode,
+          density: Math.round(finiteNumber(merged.density, defaultState.settings.density, 0, 2)),
+          hardMode: booleanValue(merged.hardMode, defaultState.settings.hardMode),
+          problemDepth: Math.round(finiteNumber(merged.problemDepth, defaultState.settings.problemDepth, 1, 3)),
+          sessionLoad: Math.round(finiteNumber(merged.sessionLoad, defaultState.settings.sessionLoad, 0, 2)),
+          vfx: Math.round(finiteNumber(merged.vfx, defaultState.settings.vfx, 0, 3)),
+          theme: visualThemeIds.includes(merged.theme) ? merged.theme : defaultState.settings.theme,
+          colorMode: colorModeIds.includes(merged.colorMode) ? merged.colorMode : defaultState.settings.colorMode,
+          colorHue: normalizeHue(merged.colorHue, defaultState.settings.colorHue),
+          colorCode: normalizeHexColor(merged.colorCode, defaultState.settings.colorCode),
+          colorHash: safeString(merged.colorHash, defaultState.settings.colorHash, 48),
+          difficultyCap: Math.round(finiteNumber(merged.difficultyCap, defaultState.settings.difficultyCap, 3, 12)),
+          answerTimerScale: finiteNumber(merged.answerTimerScale, defaultState.settings.answerTimerScale, 0.65, 1.6),
+          trialCountScale: finiteNumber(merged.trialCountScale, defaultState.settings.trialCountScale, 0.7, 1.55),
+          lurePressure: Math.round(finiteNumber(merged.lurePressure, defaultState.settings.lurePressure, 0, 2)),
+          identityVersion: safeString(merged.identityVersion, defaultState.settings.identityVersion, 40)
+        };
+      }
+
+      function sanitizeModule(key, module) {
+        const merged = deepMerge(defaultState.modules[key], module && typeof module === "object" ? module : {});
+        merged.difficulty = Math.round(finiteNumber(merged.difficulty, defaultState.modules[key].difficulty, 1, 10));
+        merged.xp = Math.round(finiteNumber(merged.xp, 0, 0, 10000000));
+        merged.sessions = Math.round(finiteNumber(merged.sessions, 0, 0, 1000000));
+        merged.best = Math.round(finiteNumber(merged.best, 0, 0, 100));
+        merged.mastery = finiteNumber(merged.mastery, 0, 0, 100);
+        merged.recent = Array.isArray(merged.recent)
+          ? merged.recent.map((value) => finiteNumber(value, 0, 0, 1)).slice(-8)
+          : [];
+        merged.lastNote = safeString(merged.lastNote, "Ready", 160);
+        if (key === "systems") {
+          merged.mode = ["mixed", "causal", "bayes", "proof", "schedule"].includes(merged.mode) ? merged.mode : "mixed";
+        }
+        if (key === "memory") {
+          merged.pace = Math.round(finiteNumber(merged.pace, defaultState.modules.memory.pace, 0, 2));
+          merged.lure = Math.round(finiteNumber(merged.lure, defaultState.modules.memory.lure, 0, 2));
+          merged.interference = booleanValue(merged.interference, defaultState.modules.memory.interference);
+        }
+        if (key === "rrt") {
+          merged.mode = ["evidence", "frames", "transitive", "analogy", "matrix", "logic"].includes(merged.mode) ? merged.mode : "evidence";
+          merged.protocol = ["eight-week", "maintenance", "assessment"].includes(merged.protocol) ? merged.protocol : "eight-week";
+        }
+        if (key === "rint") {
+          merged.stage = ["calibration", "load", "mixed"].includes(merged.stage) ? merged.stage : "calibration";
+          merged.nMin = Math.round(finiteNumber(merged.nMin, 2, 1, 6));
+          merged.nMax = Math.round(finiteNumber(merged.nMax, 4, 2, 7));
+          if (merged.nMax < merged.nMin) merged.nMax = merged.nMin;
+          merged.relationSet = ["all", "spatial", "trait", "quant", "verbal", "semantic", "comparison", "temporal", "directional"].includes(merged.relationSet) ? merged.relationSet : "all";
+          merged.tokenMode = ["mixed", "symbols", "words", "nonsense", "alphanumeric"].includes(merged.tokenMode) ? merged.tokenMode : "mixed";
+          merged.switchMode = ["rint", "normal", "type", "mixed", "binary"].includes(merged.switchMode) ? merged.switchMode : "rint";
+          merged.distractors = booleanValue(merged.distractors, merged.stage !== "calibration");
+        }
+        return merged;
+      }
+
+      function loadState() {
+        let saved = null;
+        try {
+          saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        } catch {
+          saved = null;
+        }
+        const loaded = sanitizeState(deepMerge(defaultState, saved));
+        if (!saved?.settings?.identityVersion || saved?.settings?.theme === "typewriter") {
+          loaded.settings.theme = "geist";
+          loaded.settings.identityVersion = IDENTITY_VERSION;
+        }
+        return refreshDailyState(loaded);
+      }
+
+      function refreshDailyState(nextState) {
+        const today = todayKey();
+        if (nextState.lastVisit !== today) {
+          nextState.streak = nextState.lastVisit === yesterdayKey() ? nextState.streak + 1 : 1;
+          nextState.lastVisit = today;
+        }
+        if (nextState.questDate !== today) {
+          nextState.questDate = today;
+          nextState.quests = {};
+        }
+        return nextState;
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeState(deepMerge(defaultState, state))));
+        } catch (error) {
+          console.warn("Could not save local progress", error);
+          showToast("Local save blocked or full");
+        }
+      }
+
+      function xpForLevel(level) {
+        return Math.pow(level - 1, 2) * 260;
+      }
+
+      function levelFromXp(xp) {
+        let level = 1;
+        while (xp >= xpForLevel(level + 1)) level += 1;
+        return level;
+      }
+
+      function levelProgress(xp) {
+        const level = levelFromXp(xp);
+        const start = xpForLevel(level);
+        const end = xpForLevel(level + 1);
+        return {
+          level,
+          current: xp - start,
+          needed: end - start,
+          percent: clamp(((xp - start) / (end - start)) * 100, 0, 100)
+        };
+      }
+
+      function progressionSnapshot() {
+        const modules = Object.keys(moduleInfo).map((key) => state.modules[key]);
+        const level = levelFromXp(state.xp);
+        const avgDifficulty = modules.reduce((sum, module) => sum + module.difficulty, 0) / modules.length;
+        const avgBest = modules.reduce((sum, module) => sum + module.best, 0) / modules.length;
+        const avgMastery = modules.reduce((sum, module) => sum + (module.mastery || 0), 0) / modules.length;
+        const consistency = clamp(state.sessions / 42, 0, 1) * 100;
+        const mastery = clamp(avgBest * 0.34 + avgDifficulty * 5.2 + avgMastery * 0.28 + consistency * 0.18, 0, 100);
+        const trainingPower = Math.round(state.xp * 0.12 + mastery * 18 + state.streak * 20 + avgDifficulty * 35);
+        const rank = rankForMastery(mastery, level);
+        state.progression.mastery = Math.round(mastery);
+        state.progression.trainingPower = trainingPower;
+        state.progression.peakRank = rank;
+        return { rank, mastery: Math.round(mastery), trainingPower, avgDifficulty };
+      }
+
+      function rankForMastery(mastery, level) {
+        if (mastery >= 92 && level >= 12) return "Architect";
+        if (mastery >= 82 && level >= 9) return "Strategist";
+        if (mastery >= 70 && level >= 7) return "Specialist";
+        if (mastery >= 56 && level >= 5) return "Operator";
+        if (mastery >= 38 && level >= 3) return "Apprentice";
+        return "Novice";
+      }
+
+      function memoryUnlockForDifficulty(difficulty) {
+        return "quad";
+      }
+
+      function modeUnlocked(mode) {
+        return Boolean(memoryModes[mode]);
+      }
+
+      function showToast(message) {
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.textContent = message;
+        toastLayer.appendChild(toast);
+        window.setTimeout(() => toast.remove(), 2800);
+      }
+
+      function safe(label, handler) {
+        return (...args) => {
+          try {
+            return handler(...args);
+          } catch (error) {
+            console.error(`${label} failed`, error);
+            showToast(`${label} failed safely`);
+            playSfx("wrong");
+            return undefined;
+          }
+        };
+      }
+
+      function on(target, event, handler, label = event) {
+        if (!target) {
+          console.warn(`Missing event target for ${label}`);
+          return;
+        }
+        target.addEventListener(event, safe(label, handler));
+      }
+
+      function armAudio() {
+        if (audio.armed) {
+          if (audio.ctx && audio.ctx.state === "suspended") audio.ctx.resume();
+          return;
+        }
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        audio.ctx = new AudioContext();
+        if (audio.ctx.state === "suspended") audio.ctx.resume();
+        audio.armed = true;
+      }
+
+      function playSfx(type, options = {}) {
+        triggerEnvironmentPulse(type);
+        if (!options.skipVfx) triggerVfx(type, options.origin || {});
+        if (!state.settings.sfx) return;
+        armAudio();
+        if (!audio.ctx) return;
+        const ctx = audio.ctx;
+        const volume = clamp(state.settings.volume, 0, 1);
+        const now = ctx.currentTime;
+        const master = makeSfxBus(ctx, now, volume);
+
+        const fx = {
+          hit: () => {
+            tone(ctx, master, 880, now, 0.09, { type: "square", gain: 0.42, to: 1480 });
+            tone(ctx, master, 1760, now + 0.018, 0.07, { type: "triangle", gain: 0.2 });
+            noise(ctx, master, now, 0.055, { gain: 0.18, filter: "highpass", frequency: 2400 });
+          },
+          correct: () => {
+            arpeggio(ctx, master, [523.25, 659.25, 783.99, 1046.5], now, 0.045, { type: "triangle", gain: 0.28 });
+            tone(ctx, master, 1318.5, now + 0.14, 0.16, { type: "sine", gain: 0.12 });
+          },
+          wrong: () => {
+            tone(ctx, master, 185, now, 0.22, { type: "sawtooth", gain: 0.3, to: 92 });
+            tone(ctx, master, 70, now, 0.16, { type: "triangle", gain: 0.2 });
+            noise(ctx, master, now + 0.018, 0.13, { gain: 0.2, filter: "lowpass", frequency: 420 });
+          },
+          complete: () => {
+            arpeggio(ctx, master, [392, 523.25, 659.25, 783.99, 1046.5], now, 0.06, { type: "triangle", gain: 0.28 });
+            tone(ctx, master, 196, now, 0.42, { type: "sine", gain: 0.13 });
+            noise(ctx, master, now + 0.22, 0.12, { gain: 0.08, filter: "highpass", frequency: 1600 });
+          },
+          level: () => {
+            arpeggio(ctx, master, [261.63, 329.63, 392, 523.25, 659.25, 783.99, 1046.5], now, 0.055, { type: "square", gain: 0.24 });
+            tone(ctx, master, 130.81, now, 0.55, { type: "triangle", gain: 0.16 });
+            tone(ctx, master, 1567.98, now + 0.34, 0.24, { type: "sine", gain: 0.1 });
+          },
+          combo: () => {
+            arpeggio(ctx, master, [659.25, 880, 1174.66, 1760], now, 0.032, { type: "square", gain: 0.24, duration: 0.09 });
+            noise(ctx, master, now + 0.08, 0.08, { gain: 0.08, filter: "highpass", frequency: 2600 });
+          },
+          tick: () => {
+            tone(ctx, master, 1046.5, now, 0.045, { type: "square", gain: 0.18 });
+            noise(ctx, master, now, 0.025, { gain: 0.07, filter: "highpass", frequency: 3000 });
+          },
+          start: () => {
+            tone(ctx, master, 196, now, 0.11, { type: "triangle", gain: 0.2, to: 392 });
+            tone(ctx, master, 392, now + 0.08, 0.13, { type: "square", gain: 0.18, to: 784 });
+            noise(ctx, master, now + 0.02, 0.12, { gain: 0.09, filter: "bandpass", frequency: 900 });
+          },
+          select: () => {
+            tone(ctx, master, 740, now, 0.045, { type: "triangle", gain: 0.14, to: 920 });
+          },
+          prompt: () => {
+            arpeggio(ctx, master, [587.33, 739.99, 880], now, 0.035, { type: "triangle", gain: 0.16 });
+          }
+        };
+
+        (fx[type] || fx.hit)();
+      }
+
+      function makeSfxBus(ctx, now, volume) {
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-18, now);
+        compressor.knee.setValueAtTime(24, now);
+        compressor.ratio.setValueAtTime(6, now);
+        compressor.attack.setValueAtTime(0.003, now);
+        compressor.release.setValueAtTime(0.14, now);
+
+        const master = ctx.createGain();
+        master.gain.setValueAtTime(clamp(volume, 0, 1) * 0.55 + 0.0001, now);
+        master.connect(compressor);
+        compressor.connect(ctx.destination);
+        return master;
+      }
+
+      function tone(ctx, output, frequency, start, duration, options = {}) {
+        const osc = ctx.createOscillator();
+        const amp = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+        const end = start + duration;
+        osc.type = options.type || "triangle";
+        osc.frequency.setValueAtTime(Math.max(20, frequency), start);
+        if (options.to) {
+          osc.frequency.exponentialRampToValueAtTime(Math.max(20, options.to), end - 0.006);
+        }
+        if (options.detune) {
+          osc.detune.setValueAtTime(options.detune, start);
+        }
+        filter.type = options.filter || "lowpass";
+        filter.frequency.setValueAtTime(options.frequency || 6200, start);
+        filter.Q.setValueAtTime(options.q || 0.8, start);
+        amp.gain.setValueAtTime(0.0001, start);
+        amp.gain.exponentialRampToValueAtTime((options.gain || 0.2) + 0.0001, start + 0.008);
+        amp.gain.exponentialRampToValueAtTime(0.0001, end);
+        osc.connect(filter);
+        filter.connect(amp);
+        amp.connect(output);
+        osc.start(start);
+        osc.stop(end + 0.02);
+      }
+
+      function arpeggio(ctx, output, notes, start, step, options = {}) {
+        notes.forEach((note, index) => {
+          tone(ctx, output, note, start + index * step, options.duration || 0.12, {
+            type: options.type || "triangle",
+            gain: options.gain || 0.18,
+            filter: "lowpass",
+            frequency: options.frequency || 7200
+          });
+        });
+      }
+
+      function noise(ctx, output, start, duration, options = {}) {
+        const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < length; i += 1) {
+          data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+        }
+        const source = ctx.createBufferSource();
+        const filter = ctx.createBiquadFilter();
+        const amp = ctx.createGain();
+        source.buffer = buffer;
+        filter.type = options.filter || "highpass";
+        filter.frequency.setValueAtTime(options.frequency || 1200, start);
+        filter.Q.setValueAtTime(options.q || 0.7, start);
+        amp.gain.setValueAtTime(0.0001, start);
+        amp.gain.exponentialRampToValueAtTime((options.gain || 0.1) + 0.0001, start + 0.006);
+        amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        source.connect(filter);
+        filter.connect(amp);
+        amp.connect(output);
+        source.start(start);
+        source.stop(start + duration + 0.02);
+      }
+
+      function setupVfx() {
+        vfx.canvas = $("#vfxCanvas");
+        if (!vfx.canvas) return;
+        vfx.ctx = vfx.canvas.getContext("2d");
+        resizeVfx();
+        window.addEventListener("resize", resizeVfx);
+      }
+
+      function resizeVfx() {
+        if (!vfx.canvas) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        vfx.canvas.width = Math.max(1, Math.floor(window.innerWidth * dpr));
+        vfx.canvas.height = Math.max(1, Math.floor(window.innerHeight * dpr));
+        vfx.canvas.style.width = `${window.innerWidth}px`;
+        vfx.canvas.style.height = `${window.innerHeight}px`;
+        if (vfx.ctx) vfx.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function triggerVfx(type, origin = {}) {
+        const intensity = state?.settings?.vfx || 0;
+        if (!intensity || state?.settings?.lowMotion || !vfx.ctx) return;
+        const palette = {
+          hit: "green",
+          correct: "blue",
+          wrong: "red",
+          complete: "yellow",
+          level: "violet",
+          combo: "yellow",
+          start: "blue",
+          tick: "green",
+          select: "blue",
+          prompt: "violet"
+        };
+        const countBase = { wrong: 12, tick: 5, select: 4, hit: 14, correct: 20, complete: 42, level: 68, combo: 48, start: 20, prompt: 18 }[type] || 12;
+        const count = Math.round(countBase * intensity * 0.75);
+        const x = origin.x ?? window.innerWidth * (0.34 + Math.random() * 0.32);
+        const y = origin.y ?? window.innerHeight * (0.28 + Math.random() * 0.38);
+        burstVfx(x, y, count, palette[type] || "green", type);
+        if (["wrong", "complete", "level", "combo"].includes(type)) flashVfx(type);
+        if (intensity >= 3 && ["wrong", "level", "combo"].includes(type)) shakeScreen();
+        startVfxLoop();
+      }
+
+      function triggerClassPulse(element, className, duration = 520) {
+        if (!element || state.settings.lowMotion) return;
+        element.classList.remove(className);
+        void element.offsetWidth;
+        element.classList.add(className);
+        window.clearTimeout(element[`${className}Timer`]);
+        element[`${className}Timer`] = window.setTimeout(() => element.classList.remove(className), duration);
+      }
+
+      function triggerBodyPulse(className, duration = 520) {
+        triggerClassPulse(document.body, className, duration);
+      }
+
+      function triggerEnvironmentPulse(type) {
+        if (state.settings.lowMotion) return;
+        if (type === "correct") triggerBodyPulse("grid-correct", 430);
+        if (type === "wrong") triggerBodyPulse("grid-wrong", 530);
+      }
+
+      function elementCenter(element) {
+        if (!element || typeof element.getBoundingClientRect !== "function") return {};
+        const rect = element.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        };
+      }
+
+      function burstVfx(x, y, count, colorName, type) {
+        const colorMap = vfxColors();
+        if (type === "level") {
+          for (let i = 0; i < 12; i += 1) {
+            const angle = (Math.PI * 2 * i) / 12;
+            const speed = 4.8;
+            vfx.particles.push(makeVfxParticle(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, colorMap[colorName] || colorMap.green, "ring", 0, type, 34, 3.5));
+          }
+        }
+        for (let i = 0; i < count; i += 1) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = (1.2 + Math.random() * 5.5) * (type === "level" ? 1.3 : 1);
+          const shapeRoll = Math.random();
+          const shape = shapeRoll > 0.82 ? "line" : shapeRoll > 0.62 ? "ring" : "spark";
+          vfx.particles.push(makeVfxParticle(
+            x,
+            y,
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed - (type === "complete" ? 1.5 : 0),
+            colorMap[colorName] || colorMap.green,
+            shape,
+            type === "level" ? 4 : 0,
+            type,
+            38 + Math.random() * 42,
+            2 + Math.random() * (type === "level" ? 6 : 4)
+          ));
+        }
+        vfx.particles = vfx.particles.slice(-520);
+      }
+
+      function makeVfxParticle(x, y, vx, vy, color, shape, delay, type, life, size) {
+        return {
+          x,
+          y,
+          vx,
+          vy,
+          life,
+          age: -delay,
+          size,
+          baseSize: size,
+          color,
+          shape,
+          type,
+          trail: []
+        };
+      }
+
+      function vfxColors() {
+        const key = `${state.settings.theme}|${state.settings.colorMode}|${state.settings.colorHue}|${state.settings.colorCode}|${state.settings.colorHash}|${state.settings.vfx}`;
+        if (vfx.colors && vfx.colorTheme === key) return vfx.colors;
+        vfx.colorTheme = key;
+        vfx.colors = {
+          green: cssVar("--green"),
+          blue: cssVar("--blue"),
+          yellow: cssVar("--yellow"),
+          red: cssVar("--red"),
+          violet: cssVar("--violet")
+        };
+        return vfx.colors;
+      }
+
+      function cssVar(name) {
+        if (typeof getComputedStyle !== "function") return "rgb(145, 245, 163)";
+        const themed = document.body ? getComputedStyle(document.body).getPropertyValue(name).trim() : "";
+        return themed || getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "rgb(145, 245, 163)";
+      }
+
+      function themeLabel(theme) {
+        return visualThemes[theme] || theme || "Geist Lab";
+      }
+
+      function colorModeLabel(mode) {
+        return colorModes[mode] || "Identity palette";
+      }
+
+      function stringHue(seed) {
+        const text = safeString(seed, "brain.exe", 64) || "brain.exe";
+        let hash = 2166136261;
+        for (let index = 0; index < text.length; index += 1) {
+          hash ^= text.charCodeAt(index);
+          hash = Math.imul(hash, 16777619);
+        }
+        return normalizeHue(hash >>> 0);
+      }
+
+      function hexToHue(hex) {
+        const value = normalizeHexColor(hex);
+        const r = parseInt(value.slice(1, 3), 16) / 255;
+        const g = parseInt(value.slice(3, 5), 16) / 255;
+        const b = parseInt(value.slice(5, 7), 16) / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        if (!delta) return defaultState.settings.colorHue;
+        let hue;
+        if (max === r) hue = ((g - b) / delta) % 6;
+        else if (max === g) hue = (b - r) / delta + 2;
+        else hue = (r - g) / delta + 4;
+        return normalizeHue(hue * 60);
+      }
+
+      function resolveColorHue(settings = state.settings) {
+        if (settings.colorMode === "hash") return stringHue(settings.colorHash);
+        if (settings.colorMode === "code") return hexToHue(settings.colorCode);
+        return normalizeHue(settings.colorHue);
+      }
+
+      function hsl(hue, saturation, lightness, alpha) {
+        const base = `hsl(${normalizeHue(hue)} ${saturation}% ${lightness}%`;
+        return alpha === undefined ? `${base})` : `${base} / ${alpha})`;
+      }
+
+      function colorPaletteFromSettings(settings = state.settings) {
+        const hue = resolveColorHue(settings);
+        return {
+          hue,
+          vars: {
+            "--bg": hsl(hue, 25, 8),
+            "--surface": hsl(hue, 22, 13, 0.92),
+            "--surface-2": hsl(hue, 20, 18, 0.95),
+            "--surface-3": hsl(hue, 45, 84, 0.075),
+            "--ink": hsl(hue, 50, 88),
+            "--muted": hsl(hue, 26, 70),
+            "--quiet": hsl(hue, 18, 50),
+            "--line": hsl(hue, 45, 84, 0.16),
+            "--line-strong": hsl(hue, 45, 84, 0.34),
+            "--green": hsl(hue + 92, 34, 66),
+            "--blue": hsl(hue + 172, 36, 70),
+            "--yellow": hsl(hue, 46, 62),
+            "--red": hsl(hue - 32, 42, 62),
+            "--violet": hsl(hue + 250, 34, 70),
+            "--paper": hsl(hue, 50, 88),
+            "--ink-dark": hsl(hue, 25, 8),
+            "--warm-line": hsl(hue, 46, 62, 0.3),
+            "--identity-blue": hsl(hue + 142, 36, 68),
+            "--glass": hsl(hue, 22, 12, 0.78),
+            "--glass-strong": hsl(hue, 20, 15, 0.94)
+          }
+        };
+      }
+
+      const customColorProps = [
+        "--bg", "--surface", "--surface-2", "--surface-3", "--ink", "--muted", "--quiet",
+        "--line", "--line-strong", "--green", "--blue", "--yellow", "--red", "--violet",
+        "--paper", "--ink-dark", "--warm-line", "--identity-blue", "--glass", "--glass-strong"
+      ];
+
+      function applyColorSystem() {
+        const mode = state.settings.colorMode || "identity";
+        document.body.dataset.colorMode = mode;
+        customColorProps.forEach((prop) => document.body.style.removeProperty(prop));
+        if (mode !== "identity") {
+          const palette = colorPaletteFromSettings();
+          Object.entries(palette.vars).forEach(([prop, value]) => document.body.style.setProperty(prop, value));
+          const themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) themeMeta.setAttribute("content", palette.vars["--bg"]);
+          const hueLabel = $("#colorHueLabel");
+          if (hueLabel) hueLabel.textContent = `${palette.hue} deg`;
+        }
+        const colorModeLabelNode = $("#colorModeLabel");
+        if (colorModeLabelNode) colorModeLabelNode.textContent = colorModeLabel(mode);
+        const colorHue = $("#settingColorHue");
+        if (colorHue) colorHue.value = String(state.settings.colorHue);
+        const colorCode = $("#settingColorCode");
+        if (colorCode) colorCode.value = state.settings.colorCode;
+        const colorHash = $("#settingColorHash");
+        if (colorHash) colorHash.value = state.settings.colorHash;
+        const colorMode = $("#settingColorMode");
+        if (colorMode) colorMode.value = mode;
+        const previewHue = mode === "identity" ? "--" : `${resolveColorHue()} deg`;
+        const hueLabel = $("#colorHueLabel");
+        if (hueLabel) hueLabel.textContent = previewHue;
+        const themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta && mode === "identity") themeMeta.setAttribute("content", "#101114");
+        vfx.colors = null;
+      }
+
+      function flashVfx(type) {
+        const flash = $("#screenFlash");
+        if (!flash) return;
+        flash.style.background = type === "wrong"
+          ? "radial-gradient(circle at 50% 50%, rgba(255,116,116,0.24), transparent 36%)"
+          : "radial-gradient(circle at 50% 50%, rgba(145,245,163,0.26), transparent 34%), linear-gradient(135deg, rgba(125,181,255,0.14), transparent 52%)";
+        flash.classList.remove("is-live");
+        void flash.offsetWidth;
+        flash.classList.add("is-live");
+      }
+
+      function shakeScreen() {
+        document.body.classList.remove("screen-shake");
+        void document.body.offsetWidth;
+        document.body.classList.add("screen-shake");
+      }
+
+      function animateVfx() {
+        if (!vfx.running || !vfx.ctx) return;
+        const ctx = vfx.ctx;
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        vfx.particles = vfx.particles.filter((particle) => {
+          particle.age += 1;
+          if (particle.age < 0) return true;
+          const previous = { x: particle.x, y: particle.y };
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          particle.vy += 0.08;
+          particle.vx *= 0.985;
+          particle.vy *= 0.985;
+          const alpha = clamp(1 - particle.age / particle.life, 0, 1);
+          const size = particle.baseSize * (1 + Math.sin(particle.age * 0.42) * 0.12);
+          if (particle.type === "combo") {
+            particle.trail.unshift(previous);
+            particle.trail = particle.trail.slice(0, 9);
+            particle.trail.filter((_, index) => index % 3 === 0).slice(0, 3).forEach((ghost, index) => {
+              ctx.globalAlpha = alpha * 0.3 * (1 - index * 0.2);
+              ctx.fillStyle = particle.color;
+              ctx.fillRect(ghost.x, ghost.y, Math.max(1, size * 0.75), Math.max(1, size * 0.75));
+            });
+          }
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = particle.color;
+          ctx.fillStyle = particle.color;
+          ctx.lineWidth = 1.5;
+          if (particle.shape === "ring") {
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, size * (1 + particle.age / 24), 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (particle.shape === "line") {
+            ctx.save();
+            ctx.translate(particle.x, particle.y);
+            ctx.rotate(Math.atan2(particle.vy, particle.vx));
+            ctx.fillRect(-0.5, -4, 1, 8);
+            ctx.restore();
+          } else {
+            ctx.fillRect(particle.x, particle.y, size, size);
+          }
+          return particle.age < particle.life;
+        });
+        ctx.globalAlpha = 1;
+        if (vfx.particles.length) {
+          vfx.frame = window.requestAnimationFrame(animateVfx);
+        } else {
+          vfx.running = false;
+          vfx.frame = 0;
+        }
+      }
+
+      function startVfxLoop() {
+        if (vfx.running || !vfx.ctx || !vfx.particles.length) return;
+        vfx.running = true;
+        vfx.frame = window.requestAnimationFrame(animateVfx);
+      }
+
+      function setPointerFromEvent(event) {
+        if (!event || !Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return;
+        pointerState.targetX = event.clientX;
+        pointerState.targetY = event.clientY;
+        pointerState.visible = true;
+        updateCursorMode(event.target);
+        scheduleCustomCursorSync();
+      }
+
+      function scheduleCustomCursorSync() {
+        if (pointerState.frame) return;
+        pointerState.frame = window.requestAnimationFrame(syncCustomCursor);
+      }
+
+      function syncCustomCursor() {
+        pointerState.frame = 0;
+        const cursor = $("#customCursor");
+        if (!cursor) return;
+        const dx = pointerState.targetX - pointerState.x;
+        const dy = pointerState.targetY - pointerState.y;
+        const distance = Math.hypot(dx, dy);
+        const follow = pointerState.mode === "aim" ? 0.62 : pointerState.mode === "action" ? 0.56 : 0.44;
+        if (distance > 140) {
+          pointerState.x = pointerState.targetX;
+          pointerState.y = pointerState.targetY;
+        } else {
+          pointerState.x += dx * follow;
+          pointerState.y += dy * follow;
+        }
+        cursor.style.left = `${pointerState.x}px`;
+        cursor.style.top = `${pointerState.y}px`;
+        cursor.classList.toggle("is-visible", pointerState.visible && state.settings.customCursor);
+        cursor.classList.toggle("is-action", pointerState.mode === "action");
+        cursor.classList.toggle("is-aim", pointerState.mode === "aim");
+        if (pointerState.visible && (Math.abs(pointerState.targetX - pointerState.x) > 0.35 || Math.abs(pointerState.targetY - pointerState.y) > 0.35)) {
+          scheduleCustomCursorSync();
+        }
+      }
+
+      function updateCursorMode(target) {
+        if (!target || typeof target.closest !== "function") {
+          pointerState.mode = "";
+          return;
+        }
+        if (target.closest("#aimStage")) pointerState.mode = "aim";
+        else if (target.closest(".btn, .answer-btn, .pill-btn, .nav-btn, select, input, textarea")) pointerState.mode = "action";
+        else pointerState.mode = "";
+      }
+
+      function applySettings() {
+        document.body.classList.toggle("cursor-on", state.settings.customCursor);
+        document.body.classList.toggle("motion-low", state.settings.lowMotion);
+        document.body.dataset.density = String(state.settings.density);
+        document.body.dataset.theme = state.settings.theme || "geist";
+        document.body.dataset.view = currentView;
+        document.body.dataset.gui = state.settings.guiMode || "regular";
+        document.documentElement.style.setProperty("--density", state.settings.density);
+        applyColorSystem();
+        $("#settingSfx").checked = state.settings.sfx;
+        $("#settingCursor").checked = state.settings.customCursor;
+        $("#settingMotion").checked = state.settings.lowMotion;
+        $("#settingAdaptive").checked = state.settings.adaptive;
+        $("#settingUsePortedData").checked = state.settings.usePortedData;
+        $("#settingGuiMode").value = state.settings.guiMode || "regular";
+        $("#guiModeLabel").textContent = state.settings.guiMode || "regular";
+        $("#settingHardMode").checked = state.settings.hardMode;
+        $("#settingVolume").value = Math.round(state.settings.volume * 100);
+        $("#volumeLabel").textContent = `${Math.round(state.settings.volume * 100)}%`;
+        $("#settingTheme").value = state.settings.density;
+        $("#densityLabel").textContent = ["compact", "standard", "spacious"][state.settings.density] || "standard";
+        $("#settingProblemDepth").value = state.settings.problemDepth;
+        $("#problemDepthLabel").textContent = ["", "focused", "deep", "extreme"][state.settings.problemDepth] || "deep";
+        $("#settingSessionLoad").value = state.settings.sessionLoad;
+        $("#sessionLoadLabel").textContent = ["short", "standard", "heavy"][state.settings.sessionLoad] || "standard";
+        $("#settingVfx").value = state.settings.vfx;
+        $("#vfxLabel").textContent = ["off", "low", "arcade", "max"][state.settings.vfx] || "arcade";
+        $("#settingThemeMode").value = state.settings.theme || "geist";
+        $("#themeModeLabel").textContent = themeLabel(state.settings.theme || "geist");
+        $("#settingColorMode").value = state.settings.colorMode || "identity";
+        $("#colorModeLabel").textContent = colorModeLabel(state.settings.colorMode || "identity");
+        $("#settingColorHue").value = state.settings.colorHue;
+        $("#settingColorCode").value = state.settings.colorCode;
+        $("#settingColorHash").value = state.settings.colorHash;
+        if ($("#settingDifficultyCap")) $("#settingDifficultyCap").value = state.settings.difficultyCap;
+        if ($("#difficultyCapLabel")) $("#difficultyCapLabel").textContent = `d${state.settings.difficultyCap}`;
+        if ($("#settingAnswerTimerScale")) $("#settingAnswerTimerScale").value = String(state.settings.answerTimerScale);
+        if ($("#answerTimerScaleLabel")) $("#answerTimerScaleLabel").textContent = `${Math.round(state.settings.answerTimerScale * 100)}%`;
+        if ($("#settingTrialCountScale")) $("#settingTrialCountScale").value = String(state.settings.trialCountScale);
+        if ($("#trialCountScaleLabel")) $("#trialCountScaleLabel").textContent = `${Math.round(state.settings.trialCountScale * 100)}%`;
+        if ($("#settingLurePressure")) $("#settingLurePressure").value = String(state.settings.lurePressure);
+        if ($("#lurePressureLabel")) $("#lurePressureLabel").textContent = ["low", "standard", "high"][state.settings.lurePressure] || "standard";
+        $("#quickProgramSelect").value = state.settings.hardMode ? "hard" : "normal";
+        $("#quickVfxSelect").value = String(state.settings.vfx);
+        $("#quickJumpSelect").value = currentView;
+        $("#terminalThemeSelect").value = state.settings.theme || "geist";
+        $("#terminalVfxSelect").value = String(state.settings.vfx);
+        $("#terminalModuleSelect").value = $("#terminalModuleSelect").value || "aim";
+        $("#terminalDensitySelect").value = String(state.settings.density);
+        $("#terminalDepthSelect").value = String(state.settings.problemDepth);
+        $("#terminalLoadSelect").value = String(state.settings.sessionLoad);
+        if ($("#terminalCapSelect")) $("#terminalCapSelect").value = String(state.settings.difficultyCap);
+        if ($("#terminalTimerScaleSelect")) $("#terminalTimerScaleSelect").value = String(state.settings.answerTimerScale);
+        if ($("#terminalTrialScaleSelect")) $("#terminalTrialScaleSelect").value = String(state.settings.trialCountScale);
+        if ($("#terminalLurePressureSelect")) $("#terminalLurePressureSelect").value = String(state.settings.lurePressure);
+        $("#terminalVolumeSelect").value = String(Math.round(state.settings.volume * 100));
+        $("#terminalAdaptiveToggle").checked = state.settings.adaptive;
+        $("#terminalUsePortedToggle").checked = state.settings.usePortedData;
+        $("#terminalSfxToggle").checked = state.settings.sfx;
+        $("#terminalCursorToggle").checked = state.settings.customCursor;
+        $("#memoryPaceSelect").value = String(state.modules.memory.pace ?? 1);
+        $("#memoryLureSelect").value = String(state.modules.memory.lure ?? 1);
+        $("#memoryInterferenceToggle").checked = state.modules.memory.interference !== false;
+        scheduleCustomCursorSync();
+      }
+
+      function saveSettingsFromForm() {
+        state.settings.sfx = $("#settingSfx").checked;
+        state.settings.customCursor = $("#settingCursor").checked;
+        state.settings.lowMotion = $("#settingMotion").checked;
+        state.settings.adaptive = $("#settingAdaptive").checked;
+        state.settings.usePortedData = $("#settingUsePortedData").checked;
+        state.settings.guiMode = $("#settingGuiMode").value;
+        state.settings.hardMode = $("#settingHardMode").checked;
+        state.settings.volume = Number($("#settingVolume").value) / 100;
+        state.settings.density = Number($("#settingTheme").value);
+        state.settings.problemDepth = Number($("#settingProblemDepth").value);
+        state.settings.sessionLoad = Number($("#settingSessionLoad").value);
+        state.settings.vfx = Number($("#settingVfx").value);
+        state.settings.theme = $("#settingThemeMode").value;
+        state.settings.colorMode = $("#settingColorMode").value;
+        state.settings.colorHue = Number($("#settingColorHue").value);
+        state.settings.colorCode = $("#settingColorCode").value;
+        state.settings.colorHash = $("#settingColorHash").value;
+        if ($("#settingDifficultyCap")) state.settings.difficultyCap = Number($("#settingDifficultyCap").value);
+        if ($("#settingAnswerTimerScale")) state.settings.answerTimerScale = Number($("#settingAnswerTimerScale").value);
+        if ($("#settingTrialCountScale")) state.settings.trialCountScale = Number($("#settingTrialCountScale").value);
+        if ($("#settingLurePressure")) state.settings.lurePressure = Number($("#settingLurePressure").value);
+        state.settings.identityVersion = IDENTITY_VERSION;
+        state.settings = sanitizeSettings(state.settings);
+        applySettings();
+        renderAll();
+        saveState();
+        playSfx("complete");
+        showToast("Settings saved");
+      }
+
+      function previewColorSettingsFromForm() {
+        state.settings.colorMode = $("#settingColorMode").value;
+        state.settings.colorHue = Number($("#settingColorHue").value);
+        state.settings.colorCode = $("#settingColorCode").value;
+        state.settings.colorHash = $("#settingColorHash").value;
+        state.settings = sanitizeSettings(state.settings);
+        applyColorSystem();
+      }
+
+      function setView(view) {
+        const previousView = currentView;
+        currentView = view;
+        document.body.classList.remove("view-shift");
+        void document.body.offsetWidth;
+        document.body.classList.add("view-shift");
+        window.clearTimeout(setView.transitionTimer);
+        setView.transitionTimer = window.setTimeout(() => document.body.classList.remove("view-shift"), 560);
+        $$(".view").forEach((panel) => panel.classList.remove("is-active"));
+        const nextPanel = $(`#view-${view}`);
+        if (!nextPanel) {
+          showToast(`Unknown view: ${view}`);
+          currentView = previousView;
+          document.body.classList.remove("view-shift");
+          return;
+        }
+        nextPanel.classList.add("is-active");
+        document.body.dataset.view = view;
+        $$(".nav-btn").forEach((button) => button.classList.toggle("is-active", button.dataset.view === view));
+        if (previousView !== view) playSfx("select");
+        const titles = {
+          dashboard: ["brain.exe", "Choose a module, complete reps, and let the lab adjust."],
+          aim: ["aim.core", "Click targets under pressure. The next round adapts to your accuracy."],
+          questions: ["logic.gym", "Generated problems scale with your performance signal."],
+          memory: ["nback.lab", "Train updating by matching symbols and positions from N steps back."],
+          focus: ["stroop.switch", "Answer ink color under word-color conflict."],
+          creativity: ["creative.sprint", "Train divergent output with timed prompts and constraints."],
+          analogy: ["transfer.map", "Practice analogical transfer from distant domains."],
+          spatial: ["spatial.transforms", "Track coordinates through chained rotations, mirrors, and shifts."],
+          calibration: ["confidence.lab", "Answer evidence questions and score how well confidence matches accuracy."],
+          systems: ["systems.logic", "Solve causal, Bayesian, proof-chain, and scheduling problems."],
+          rint: ["rint.nback", "Compare relational states across N-back load, distractors, and mixed switching."],
+          rrt: ["rrt.matrix", "Train relational frames, transitive inference, analogies, and matrix rules."],
+          progress: ["progress.log", "Review sessions, difficulty changes, and module growth."],
+          research: ["evidence.base", "See the evidence and the objective scoring model."],
+          faq: ["help.index", "Privacy, evidence caveats, terminal commands, and training mechanics."],
+          settings: ["settings.sys", "Tune sound, cursor, motion, adaptive behavior, and training load."],
+          terminal: ["terminal.exe", "Use commands to tune, launch, and inspect your training program."]
+        };
+        $("#viewTitle").textContent = titles[view][0];
+        $("#viewSubtitle").textContent = titles[view][1];
+        if ($("#quickJumpSelect")) $("#quickJumpSelect").value = view;
+        if (view === "aim") resizeCanvas();
+        if (view === "dashboard") {
+          uiFx.dashboardCounterRun.clear();
+          window.requestAnimationFrame(animateDashboardCounters);
+        }
+        updateTopbarScrollState();
+      }
+
+      function updateTopbarScrollState() {
+        const topbar = $(".topbar");
+        if (!topbar) return;
+        const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+        topbar.classList.toggle("is-scrolled", scrollTop > 40);
+      }
+
+      function moduleAverage(key) {
+        const recent = state.modules[key].recent;
+        if (!recent.length) return 0;
+        return recent.reduce((sum, value) => sum + value, 0) / recent.length;
+      }
+
+      function difficultyNote(key) {
+        const module = state.modules[key];
+        const avg = moduleAverage(key);
+        if (!module.sessions && portedSuggestedDifficulty(key)) return "Ported";
+        if (!module.sessions) return "Start";
+        if (avg >= 0.82) return "Rising";
+        if (avg < 0.45) return "Easing";
+        return "Stable";
+      }
+
+      function logEvent(kind, message, detail = "") {
+        state.eventLog = Array.isArray(state.eventLog) ? state.eventLog : [];
+        state.eventLog.unshift(sanitizeLogEntry({
+          time: new Date().toLocaleString(),
+          kind,
+          message,
+          detail: typeof detail === "string" ? detail : JSON.stringify(detail)
+        }));
+        state.eventLog = state.eventLog.filter(Boolean).slice(0, 120);
+      }
+
+      function activeTrainingModule() {
+        if (aimRound.active) return "aim";
+        if (quiz.active) return "questions";
+        if (memory.active) return "memory";
+        if (focus.active) return "focus";
+        if (creative.active) return "creativity";
+        if (answerTimer.active && answerTimer.module === "analogy") return "analogy";
+        if (spatial.active) return "spatial";
+        if (calibration.active) return "calibration";
+        if (systems.active) return "systems";
+        if (rint.active) return "rint";
+        if (rrt.active) return "rrt";
+        return "";
+      }
+
+      function updateTrainingState() {
+        const key = activeTrainingModule();
+        uiFx.activeModule = key;
+        document.body.classList.toggle("is-training", Boolean(key));
+        document.body.dataset.activeModule = key || "";
+        $$(".module-card").forEach((card) => card.classList.toggle("is-training", Boolean(key) && card.dataset.module === key));
+      }
+
+      function answerTimeLimit(key) {
+        const d = moduleDifficulty(key);
+        const loadBonus = state.settings.sessionLoad === 2 ? 1.1 : state.settings.sessionLoad === 0 ? 0.88 : 1;
+        const depthPenalty = Math.max(0, problemDepth() - 1) * 2500;
+        const limits = {
+          aim: aimRound.targetLife || aimConfig().targetLife,
+          questions: 48000 - d * 1900 + depthPenalty,
+          memory: memoryConfig().interval,
+          focus: focusConfig().targetMs,
+          creativity: creativeConfig().seconds * 1000,
+          analogy: 210000 - d * 8000 + depthPenalty * 3,
+          spatial: 52000 - d * 1800 + depthPenalty,
+          calibration: 60000 - d * 1700 + depthPenalty,
+          systems: 68000 - d * 2100 + depthPenalty * 1.2,
+          rint: 42000 - d * 1500 + depthPenalty,
+          rrt: 56000 - d * 1800 + depthPenalty
+        };
+        const quickTimer = key === "focus" || key === "aim" || key === "memory";
+        const longTimer = key === "creativity" || key === "analogy";
+        const timerScale = finiteNumber(state?.settings?.answerTimerScale, 1, 0.65, 1.6);
+        return Math.round(clamp((limits[key] || 30000) * loadBonus * timerScale, quickTimer ? 420 : 9000, longTimer ? 240000 : 90000));
+      }
+
+      function startAnswerTimer(module, durationMs, onExpire) {
+        stopAnswerTimer();
+        answerTimer.active = true;
+        answerTimer.module = module;
+        answerTimer.startedAt = performance.now();
+        answerTimer.duration = Math.max(1, durationMs);
+        answerTimer.remaining = answerTimer.duration;
+        answerTimer.onExpire = typeof onExpire === "function" ? onExpire : null;
+        answerTimer.timeout = window.setTimeout(() => {
+          const expire = answerTimer.onExpire;
+          stopAnswerTimer(module);
+          if (expire) expire();
+        }, answerTimer.duration);
+        renderAnswerTimer();
+        updateTrainingState();
+        answerTimer.frame = window.requestAnimationFrame(tickAnswerTimer);
+        return answerTimer.timeout;
+      }
+
+      function stopAnswerTimer(module = "") {
+        if (module && answerTimer.module && answerTimer.module !== module) return;
+        window.clearTimeout(answerTimer.timeout);
+        if (answerTimer.frame) window.cancelAnimationFrame(answerTimer.frame);
+        answerTimer.active = false;
+        answerTimer.module = "";
+        answerTimer.duration = 0;
+        answerTimer.remaining = 0;
+        answerTimer.timeout = 0;
+        answerTimer.frame = 0;
+        answerTimer.onExpire = null;
+        renderAnswerTimer();
+        updateTrainingState();
+      }
+
+      function tickAnswerTimer(now) {
+        if (!answerTimer.active) return;
+        answerTimer.remaining = Math.max(0, answerTimer.duration - (now - answerTimer.startedAt));
+        renderAnswerTimer();
+        if (answerTimer.remaining > 0) {
+          answerTimer.frame = window.requestAnimationFrame(tickAnswerTimer);
+        }
+      }
+
+      function timerText(module, remainingMs) {
+        if (!module || !remainingMs) return "timer --";
+        const seconds = Math.max(0, Math.ceil(remainingMs / 1000));
+        const label = { aim: "target", questions: "question", memory: "card", focus: "ink", creativity: "sprint", analogy: "mapping", spatial: "chain", calibration: "confidence", systems: "systems", rint: "rint", rrt: "relation" }[module] || "timer";
+        return `${label} ${seconds}s`;
+      }
+
+      function renderAnswerTimer() {
+        const active = answerTimer.active;
+        const remaining = active ? answerTimer.remaining : 0;
+        const ratio = active ? clamp(remaining / Math.max(1, answerTimer.duration), 0, 1) : 0;
+        const text = timerText(answerTimer.module, remaining);
+        const top = $("#topAnswerTimer");
+        const topChip = $("#topTimerChip");
+        if (top) top.textContent = active ? text.replace(/^[a-z]+ /, "") : "--";
+        if (topChip) {
+          topChip.style.setProperty("--timer-progress", `${ratio * 100}%`);
+          topChip.classList.toggle("is-warning", active && ratio <= 0.25);
+        }
+        $$("[data-timer-for]").forEach((item) => {
+          const isCurrent = active && item.dataset.timerFor === answerTimer.module;
+          item.textContent = isCurrent ? text : "timer --";
+          item.style.setProperty("--timer-progress", `${isCurrent ? ratio * 100 : 0}%`);
+          item.classList.toggle("is-warning", isCurrent && ratio <= 0.25);
+        });
+      }
+
+      function animateAnswerFeedback(button, correct) {
+        const box = button?.closest?.(".question-box");
+        if (!correct && box) triggerClassPulse(box, "is-glitch", 90);
+      }
+
+      function revealTimedOutAnswer(gridSelector, answer) {
+        const buttons = $$(`${gridSelector} .answer-btn`);
+        buttons.forEach((item) => {
+          item.disabled = true;
+          if (item.textContent === String(answer)) item.classList.add("is-correct");
+        });
+        const box = buttons[0]?.closest?.(".question-box");
+        if (box) triggerClassPulse(box, "is-glitch", 90);
+      }
+
+      function pulseBars() {
+        $$(".bar span").forEach((span) => triggerClassPulse(span, "is-pulsing", 620));
+      }
+
+      function triggerLevelMoment() {
+        triggerBodyPulse("level-up", 1250);
+        ["#topLevel", "#sideLevel", "#dashLevel"].forEach((selector) => triggerClassPulse($(selector), "is-level-hit", 520));
+      }
+
+      function animateDifficultyChange(key, newDifficulty, direction) {
+        const card = $(`.module-card[data-module="${key}"]`);
+        if (!card || !direction) return;
+        const className = direction > 0 ? "is-difficulty-up" : "is-difficulty-down";
+        triggerClassPulse(card, className, 760);
+        const label = document.createElement("span");
+        label.className = `difficulty-float${direction < 0 ? " is-down" : ""}`;
+        label.textContent = `${direction > 0 ? "↑" : "↓"} d${newDifficulty}`;
+        card.appendChild(label);
+        window.setTimeout(() => label.remove(), 760);
+      }
+
+      function animateQuestCompletion(key) {
+        const item = $(`.quest-list li[data-quest="${key}"]`);
+        const check = item?.querySelector?.(".quest-check");
+        if (!item || !check) return;
+        triggerClassPulse(item, "is-quest-pop", 540);
+        if (state.settings.vfx && !state.settings.lowMotion && vfx.ctx) {
+          const center = elementCenter(check);
+          burstVfx(center.x, center.y, 8, "green", "tick");
+          startVfxLoop();
+        }
+      }
+
+      function setRollingNumber(element, value) {
+        if (!element) return;
+        const next = String(value);
+        const previous = element.dataset.rollValue ?? element.textContent.trim();
+        if (previous === next || uiFx.firstRender || state.settings.lowMotion) {
+          element.textContent = next;
+          element.dataset.rollValue = next;
+          return;
+        }
+        element.classList.add("number-roll");
+        element.innerHTML = `<span class="roll-old">${escapeHtml(previous)}</span><span class="roll-new">${escapeHtml(next)}</span>`;
+        element.dataset.rollValue = next;
+        window.setTimeout(() => {
+          element.classList.remove("number-roll");
+          element.textContent = next;
+        }, 500);
+      }
+
+      function setStreakDisplay(element, value) {
+        if (!element) return;
+        element.textContent = value;
+        const hot = value > 3;
+        element.classList.toggle("is-streak-hot", hot);
+        element.classList.toggle("is-streak-wild", value > 7);
+        if (hot) {
+          const aura = clamp(value / 10, 0.45, 1);
+          element.style.setProperty("--streak-glow-small", `${Math.round(8 * aura)}px`);
+          element.style.setProperty("--streak-glow-large", `${Math.round(18 * aura)}px`);
+        }
+      }
+
+      function animateNumericText(element, value, suffix = "") {
+        if (!element || state.settings.lowMotion) {
+          if (element) element.textContent = `${value}${suffix}`;
+          return;
+        }
+        const key = element.id || "";
+        if (uiFx.dashboardCounterRun.has(key)) {
+          element.textContent = `${value}${suffix}`;
+          return;
+        }
+        uiFx.dashboardCounterRun.add(key);
+        const start = 0;
+        const end = Number(value) || 0;
+        const started = performance.now();
+        const duration = 600;
+        function tick(now) {
+          const t = clamp((now - started) / duration, 0, 1);
+          const eased = 1 - Math.pow(1 - t, 3);
+          element.textContent = `${Math.round(start + (end - start) * eased)}${suffix}`;
+          if (t < 1) window.requestAnimationFrame(tick);
+        }
+        window.requestAnimationFrame(tick);
+      }
+
+      function animateDashboardCounters() {
+        if (currentView !== "dashboard") return;
+        animateNumericText($("#dashXp"), state.xp);
+        animateNumericText($("#dashMastery"), progressionSnapshot().mastery, "%");
+        animateNumericText($("#dashStreak"), state.streak);
+      }
+
+      function refreshRubricArc(strong) {
+        if (!strong) return;
+        const card = strong.closest(".rubric-card");
+        if (!card) return;
+        const match = String(strong.textContent).match(/(\d+)/);
+        if (!match || !String(strong.textContent).includes("%")) return;
+        const score = clamp(Number(match[1]), 0, 100);
+        card.style.setProperty("--rubric-score", score);
+        card.style.setProperty("--rubric-fill", `${score}%`);
+        card.style.setProperty("--rubric-offset", String(113 - 113 * score / 100));
+        card.classList.toggle("is-full", score >= 100);
+        if (!card.querySelector(".rubric-arc")) {
+          const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute("class", "rubric-arc");
+          svg.setAttribute("viewBox", "0 0 42 42");
+          svg.innerHTML = `<circle class="arc-track" cx="21" cy="21" r="18"></circle><circle class="arc-value" cx="21" cy="21" r="18"></circle>`;
+          card.appendChild(svg);
+        }
+      }
+
+      function refreshRubricArcs() {
+        $$(".rubric-card strong").forEach(refreshRubricArc);
+      }
+
+      function recordSession(key, result) {
+        const module = state.modules[key];
+        const success = clamp(result.success, 0, 1);
+        const xp = Math.max(0, Math.round(result.xp));
+        const oldDifficulty = module.difficulty;
+        const oldLevel = levelProgress(state.xp).level;
+        const questWasDone = Boolean(state.quests[key]);
+
+        module.recent.push(success);
+        module.recent = module.recent.slice(-8);
+        module.sessions += 1;
+        module.xp += xp;
+        module.best = Math.max(module.best, Math.round(success * 100));
+        module.mastery = clamp((module.mastery || 0) * 0.84 + success * 100 * 0.16 + module.difficulty * 0.85, 0, 100);
+
+        const avg = moduleAverage(key);
+        if (state.settings.adaptive && module.recent.length >= 2 && avg >= 0.82) {
+          module.difficulty = clamp(module.difficulty + 1, 1, 10);
+          module.lastNote = "Raised difficulty after strong recent results.";
+        } else if (state.settings.adaptive && module.recent.length >= 2 && avg < 0.45) {
+          module.difficulty = clamp(module.difficulty - 1, 1, 10);
+          module.lastNote = "Lowered difficulty so you can rebuild momentum.";
+        } else if (!state.settings.adaptive) {
+          module.lastNote = "Adaptive difficulty is off in settings.";
+        } else {
+          module.lastNote = "Held difficulty steady.";
+        }
+
+        state.xp += xp;
+        const newLevel = levelProgress(state.xp).level;
+        state.sessions += 1;
+        state.quests[key] = true;
+        state.history.unshift(sanitizeHistoryEntry({
+          module: key,
+          label: result.label,
+          xp,
+          success: Math.round(success * 100),
+          difficulty: module.difficulty,
+          previousDifficulty: oldDifficulty,
+          time: new Date().toLocaleString()
+        }));
+        state.history = state.history.filter(Boolean).slice(0, 24);
+        logEvent("session", `${moduleInfo[key].label}: ${Math.round(success * 100)}%, +${xp} XP`, `d${oldDifficulty}->d${module.difficulty}; ${safeString(result.label, "", 120)}`);
+        saveState();
+        renderAll();
+        pulseBars();
+        if (newLevel > oldLevel) triggerLevelMoment();
+        if (module.difficulty !== oldDifficulty) animateDifficultyChange(key, module.difficulty, module.difficulty > oldDifficulty ? 1 : -1);
+        if (!questWasDone && state.quests[key]) animateQuestCompletion(key);
+        const diffText = module.difficulty > oldDifficulty ? "difficulty up" : module.difficulty < oldDifficulty ? "difficulty down" : "difficulty steady";
+        playSfx(module.difficulty > oldDifficulty ? "level" : "complete");
+        showToast(`+${xp} XP, ${diffText}`);
+      }
+
+      function renderAll() {
+        renderHeader();
+        renderDashboard();
+        renderAimConfig();
+        renderQuizStats();
+        renderMemoryStats();
+        renderFocusStats();
+        renderCreativeConfig();
+        renderAnalogyStats();
+        renderSpatialStats();
+        renderCalibrationStats();
+        renderSystemsStats();
+        renderRintStats();
+        renderRrtStats();
+        renderTerminalStatus();
+        renderProgress();
+        applySettings();
+        updateTrainingState();
+        renderAnswerTimer();
+        refreshRubricArcs();
+        animateDashboardCounters();
+        uiFx.firstRender = false;
+      }
+
+      function renderHeader() {
+        const level = levelProgress(state.xp);
+        const progression = progressionSnapshot();
+        setRollingNumber($("#sideLevel"), level.level);
+        setRollingNumber($("#topLevel"), level.level);
+        setRollingNumber($("#dashLevel"), level.level);
+        $("#dashRank").textContent = progression.rank;
+        $("#dashMastery").textContent = `${progression.mastery}%`;
+        $("#sideXpBar").style.width = `${level.percent}%`;
+        $("#sideXpText").textContent = `${level.current}/${level.needed} XP`;
+        $("#sideStreak").textContent = `streak ${state.streak}`;
+        $("#topXp").textContent = state.xp;
+        $("#dashXp").textContent = state.xp;
+        setStreakDisplay($("#topStreak"), state.streak);
+        setStreakDisplay($("#dashStreak"), state.streak);
+        $("#topSessions").textContent = state.sessions;
+
+        Object.keys(moduleInfo).forEach((key) => {
+          const cap = key.charAt(0).toUpperCase() + key.slice(1);
+          const nav = $(`#nav${cap}Meta`);
+          if (nav) nav.textContent = `d${moduleDifficulty(key)}`;
+        });
+      }
+
+      function renderDashboard() {
+        const completed = Object.keys(moduleInfo).filter((key) => state.quests[key]).length;
+        const total = Object.keys(moduleInfo).length;
+        $("#dashToday").textContent = `${completed}/${total}`;
+        $("#navDashboardMeta").textContent = `${completed}/${total}`;
+
+        const moduleGrid = $("#moduleGrid");
+        moduleGrid.innerHTML = "";
+        Object.keys(moduleInfo).forEach((key) => {
+          const info = moduleInfo[key];
+          const module = state.modules[key];
+          const card = document.createElement("section");
+          card.className = "module-card";
+          card.dataset.module = key;
+          card.innerHTML = `
+            <div class="module-card-top">
+              <span class="module-icon">${escapeHtml(info.code)}</span>
+              <span class="module-status">${state.quests[key] ? "done today" : "open quest"}</span>
+            </div>
+            <div class="module-meta">
+              <span>${escapeHtml(info.skill)}</span>
+              <span>d${moduleDifficulty(key)} - ${escapeHtml(difficultyNote(key))}</span>
+            </div>
+            <h3>${escapeHtml(info.label)}</h3>
+            <p>${escapeHtml(info.description)}</p>
+            <div class="bar" aria-hidden="true"><span style="width: ${clamp(module.xp / 900 * 100, 4, 100)}%"></span></div>
+            <div class="mini-line" style="margin-top: 10px;">
+              <span>${module.xp} XP</span>
+              <span>${Math.round(module.mastery || 0)} mastery</span>
+            </div>
+          `;
+          const button = document.createElement("button");
+          button.className = "btn small";
+          button.type = "button";
+          button.textContent = "Open module";
+          on(button, "click", () => setView(info.view), `open module ${key}`);
+          card.appendChild(button);
+          moduleGrid.appendChild(card);
+        });
+
+        const questList = $("#questList");
+        questList.innerHTML = "";
+        Object.keys(moduleInfo).forEach((key) => {
+          const info = moduleInfo[key];
+          const item = document.createElement("li");
+          item.className = state.quests[key] ? "is-done" : "";
+          item.dataset.quest = key;
+          item.innerHTML = `
+            <span class="quest-check">ok</span>
+            <div><strong>${escapeHtml(info.short)}</strong><span>${escapeHtml(info.quest)}</span></div>
+            <span>${state.quests[key] ? "done" : `d${moduleDifficulty(key)}`}</span>
+          `;
+          questList.appendChild(item);
+        });
+
+        const skillBars = $("#skillBars");
+        skillBars.innerHTML = "";
+        Object.keys(moduleInfo).forEach((key) => {
+          const module = state.modules[key];
+          const row = document.createElement("div");
+          row.className = "skill-row";
+          row.innerHTML = `
+            <div class="skill-label"><span>${escapeHtml(moduleInfo[key].skill)}</span><span>${module.xp} XP</span></div>
+            <div class="bar"><span style="width: ${clamp(module.xp / 1200 * 100, 2, 100)}%"></span></div>
+          `;
+          skillBars.appendChild(row);
+        });
+      }
+
+      function aimConfig() {
+        const d = moduleDifficulty("aim");
+        const load = sessionLoadMultiplier();
+        return {
+          duration: Math.round((18 + d * 1.5) * load),
+          targetSize: clamp(74 - d * 5.5, 26, 74),
+          targetLife: clamp(1320 - d * 95, 460, 1320),
+          goal: Math.round((10 + d * 3) * load)
+        };
+      }
+
+      function renderAimConfig() {
+        const config = aimConfig();
+        $("#aimDifficulty").textContent = moduleDifficulty("aim");
+        $("#aimTargetSize").textContent = `${config.targetSize}px`;
+        $("#aimTargetLife").textContent = `${config.targetLife}ms`;
+        $("#aimRoundGoal").textContent = `${config.goal} hits`;
+        $("#aimAdaptiveNote").textContent = state.modules.aim.lastNote;
+        $("#aimGoal").textContent = config.goal;
+      }
+
+      function startAimRound() {
+        if (aimRound.active) return;
+        const config = aimConfig();
+        playSfx("start");
+        aimRound.active = true;
+        aimRound.duration = config.duration;
+        aimRound.remaining = config.duration;
+        aimRound.hits = 0;
+        aimRound.misses = 0;
+        aimRound.streak = 0;
+        aimRound.best = 0;
+        aimRound.goal = config.goal;
+        aimRound.targetLife = config.targetLife;
+        aimRound.targetSize = config.targetSize;
+        $("#aimTarget").style.setProperty("--target-size", `${config.targetSize}px`);
+        $("#aimTarget").classList.add("is-live");
+        $("#aimFeedback").textContent = "Round running. Hit targets before they move.";
+        updateTrainingState();
+        updateAimHud();
+        moveTarget();
+        aimRound.tickTimer = window.setInterval(() => {
+          aimRound.remaining = Math.max(0, aimRound.remaining - 0.1);
+          updateAimHud();
+          if (aimRound.remaining <= 0) finishAimRound();
+        }, 100);
+      }
+
+      function stopAimRound() {
+        if (!aimRound.active) return;
+        finishAimRound();
+      }
+
+      function updateAimHud() {
+        $("#aimTime").textContent = aimRound.remaining.toFixed(1);
+        $("#aimHits").textContent = aimRound.hits;
+        $("#aimMisses").textContent = aimRound.misses;
+        $("#aimBest").textContent = aimRound.best;
+        $("#aimGoal").textContent = aimRound.goal;
+      }
+
+      function moveTarget() {
+        window.clearTimeout(aimRound.moveTimer);
+        stopAnswerTimer("aim");
+        if (!aimRound.active) return;
+        const stage = $("#aimStage");
+        const target = $("#aimTarget");
+        const rect = stage.getBoundingClientRect();
+        const margin = aimRound.targetSize * 0.8;
+        const x = margin + Math.random() * Math.max(1, rect.width - margin * 2);
+        const y = margin + Math.random() * Math.max(1, rect.height - margin * 2);
+        stage.style.setProperty("--target-x", `${x}px`);
+        stage.style.setProperty("--target-y", `${y}px`);
+        target.style.left = `${x}px`;
+        target.style.top = `${y}px`;
+        emitTargetSpawnRing(stage, x, y);
+        aimRound.moveTimer = startAnswerTimer("aim", answerTimeLimit("aim"), expireAimTarget);
+      }
+
+      function expireAimTarget() {
+        if (!aimRound.active) return;
+        aimRound.misses += 1;
+        aimRound.streak = 0;
+        playSfx("wrong");
+        clearComboClass();
+        updateAimHud();
+        moveTarget();
+      }
+
+      function emitTargetSpawnRing(stage, x, y) {
+        if (state.settings.lowMotion) return;
+        const ring = document.createElement("span");
+        ring.className = "spawn-ring";
+        ring.style.left = `${x}px`;
+        ring.style.top = `${y}px`;
+        stage.appendChild(ring);
+        window.setTimeout(() => ring.remove(), 360);
+      }
+
+      function hitTarget(event) {
+        if (!aimRound.active) return;
+        event.stopPropagation();
+        aimRound.hits += 1;
+        aimRound.streak += 1;
+        aimRound.best = Math.max(aimRound.best, aimRound.streak);
+        showPop(event.clientX, event.clientY, "+hit");
+        playSfx(aimRound.streak > 0 && aimRound.streak % 5 === 0 ? "combo" : "hit", { origin: { x: event.clientX, y: event.clientY } });
+        applyComboClass(aimRound.streak);
+        updateAimHud();
+        moveTarget();
+      }
+
+      function clearComboClass() {
+        document.body.classList.remove("combo-5", "combo-10", "combo-15");
+      }
+
+      function applyComboClass(streak) {
+        if (streak < 5 || streak % 5 !== 0 || state.settings.lowMotion) return;
+        clearComboClass();
+        const className = streak >= 15 ? "combo-15" : streak >= 10 ? "combo-10" : "combo-5";
+        triggerBodyPulse(className, streak >= 15 ? 700 : 480);
+        if (streak >= 10) flashVfx("combo");
+      }
+
+      function missTarget(event) {
+        if (!aimRound.active) return;
+        if (event.target !== $("#aimStage") && event.target !== $("#fieldCanvas")) return;
+        aimRound.misses += 1;
+        aimRound.streak = 0;
+        clearComboClass();
+        showPop(event.clientX, event.clientY, "miss");
+        playSfx("wrong", { origin: { x: event.clientX, y: event.clientY } });
+        updateAimHud();
+      }
+
+      function showPop(clientX, clientY, text) {
+        const stage = $("#aimStage");
+        const rect = stage.getBoundingClientRect();
+        const pop = document.createElement("div");
+        pop.className = "pop";
+        pop.textContent = text;
+        pop.style.left = `${clientX - rect.left}px`;
+        pop.style.top = `${clientY - rect.top}px`;
+        stage.appendChild(pop);
+        window.setTimeout(() => pop.remove(), 700);
+      }
+
+      function finishAimRound() {
+        window.clearInterval(aimRound.tickTimer);
+        window.clearTimeout(aimRound.moveTimer);
+        stopAnswerTimer("aim");
+        aimRound.active = false;
+        clearComboClass();
+        updateTrainingState();
+        $("#aimTarget").classList.remove("is-live");
+        const attempts = aimRound.hits + aimRound.misses;
+        if (!attempts) {
+          $("#aimFeedback").textContent = "Round cancelled. No progress changed.";
+          updateAimHud();
+          return;
+        }
+        const accuracy = attempts ? aimRound.hits / attempts : 0;
+        const goalRate = clamp(aimRound.hits / Math.max(1, aimRound.goal), 0, 1);
+        const success = goalRate * 0.6 + accuracy * 0.4;
+        const xp = aimRound.hits * 9 + aimRound.best * 8 + Math.round(accuracy * 80);
+        $("#aimFeedback").textContent = `Round complete: ${aimRound.hits} hits, ${Math.round(accuracy * 100)}% accuracy, best streak ${aimRound.best}.`;
+        recordSession("aim", { success, xp, label: `${aimRound.hits} hits, ${Math.round(accuracy * 100)}% accuracy` });
+      }
+
+      function numberOptions(answer, spread) {
+        const options = new Set([answer]);
+        while (options.size < 4) {
+          const offset = Math.floor(Math.random() * spread) + 1;
+          options.add(answer + (Math.random() > 0.5 ? offset : -offset));
+        }
+        return shuffle([...options]).map(String);
+      }
+
+      function answerOptions(question) {
+        const answer = String(question.answer);
+        const seen = new Set();
+        const options = [answer, ...(question.options || []).map(String)].filter((option) => {
+          const key = option.trim().toLowerCase();
+          if (!key || seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        return shuffle(options);
+      }
+
+      function generateQuestion() {
+        const d = moduleDifficulty("questions") + problemDepth() - 1;
+        const core = [makeMathQuestion, makeSequenceQuestion, makeAnalogyQuestion, makeRuleQuestion, makeLogicQuestion, makeClassificationQuestion, makeWorkingRuleQuestion];
+        const advanced = [makeCaseReasoningQuestion, makeEvidenceWeighingQuestion, makeConstraintOptimizationQuestion, makeArgumentFlawQuestion, makeBayesianQuestion, makeCausalGraphQuestion, makeProofChainQuestion, makeScheduleOptimizerQuestion, makeMatrixReasoningQuestion, makeStudyDesignQuestion, makeFermiQuestion];
+        const generators = problemDepth() >= 2 ? [...core, ...advanced, ...advanced] : [...core, ...advanced];
+        return sample(generators)(d);
+      }
+
+      function makeMathQuestion(d) {
+        const a = Math.floor(Math.random() * (8 + d * 5)) + 2;
+        const b = Math.floor(Math.random() * (8 + d * 4)) + 2;
+        const c = Math.floor(Math.random() * (3 + d)) + 2;
+        const useMultiply = d >= 3 || Math.random() > 0.45;
+        const answer = useMultiply ? a + b * c : a * b - c;
+        return {
+          type: "mental math",
+          text: useMultiply ? `Solve: ${a} + ${b} x ${c}` : `Solve: ${a} x ${b} - ${c}`,
+          answer: String(answer),
+          options: numberOptions(answer, 8 + d * 4),
+          explanation: useMultiply ? `Use order of operations: multiply ${b} x ${c}, then add ${a}.` : `Multiply ${a} x ${b}, then subtract ${c}.`
+        };
+      }
+
+      function makeSequenceQuestion(d) {
+        const start = Math.floor(Math.random() * 8) + 1;
+        const step = Math.floor(Math.random() * (d + 3)) + 2;
+        const growth = d >= 5 ? Math.floor(Math.random() * 3) + 1 : 0;
+        const sequence = [];
+        let value = start;
+        let currentStep = step;
+        for (let i = 0; i < 5; i += 1) {
+          sequence.push(value);
+          value += currentStep;
+          currentStep += growth;
+        }
+        const answer = value;
+        return {
+          type: growth ? "growing sequence" : "sequence",
+          text: `What comes next? ${sequence.join(", ")}, ?`,
+          answer: String(answer),
+          options: numberOptions(answer, 10 + d * 4),
+          explanation: growth ? `The step grows by ${growth} each time.` : `Add ${step} each time.`
+        };
+      }
+
+      function makeAnalogyQuestion() {
+        const set = sample([
+          ["seed", "sprout", "spark", "flame", ["ash", "flame", "stone", "river"]],
+          ["map", "route", "recipe", "meal", ["meal", "oven", "salt", "plate"]],
+          ["question", "answer", "lock", "key", ["door", "key", "hinge", "room"]],
+          ["practice", "skill", "pressure", "focus", ["noise", "focus", "speed", "luck"]],
+          ["rough draft", "revision", "prototype", "iteration", ["iteration", "factory", "launch", "paint"]]
+        ]);
+        return {
+          type: "verbal analogy",
+          text: `${set[0]} is to ${set[1]} as ${set[2]} is to...`,
+          answer: set[3],
+          options: shuffle(set[4]),
+          explanation: `Match the relation from ${set[0]} -> ${set[1]}, then apply it to ${set[2]}.`
+        };
+      }
+
+      function makeRuleQuestion(d) {
+        const n = Math.floor(Math.random() * (10 + d * 3)) + 4;
+        const answer = n % 2 === 0 ? n / 2 + d : n * 2 - d;
+        return {
+          type: "rule switch",
+          text: `Rule: if the number is even, halve it then add ${d}. If odd, double it then subtract ${d}. Input: ${n}.`,
+          answer: String(answer),
+          options: numberOptions(answer, 9 + d * 3),
+          explanation: n % 2 === 0 ? `${n} is even, so ${n} / 2 + ${d}.` : `${n} is odd, so ${n} x 2 - ${d}.`
+        };
+      }
+
+      function makeLogicQuestion(d) {
+        const names = shuffle(["Ari", "Bo", "Cy", "Dee", "Eli", "Fay"]).slice(0, 3);
+        const scores = shuffle([12 + d, 15 + d * 2, 18 + d * 3]);
+        const order = names.map((name, index) => ({ name, score: scores[index] })).sort((a, b) => b.score - a.score);
+        return {
+          type: "deduction",
+          text: `${names[0]} scored ${scores[0]}, ${names[1]} scored ${scores[1]}, and ${names[2]} scored ${scores[2]}. Who scored the most?`,
+          answer: order[0].name,
+          options: shuffle(names),
+          explanation: `${order[0].name} has the highest listed score.`
+        };
+      }
+
+      function makeClassificationQuestion(d) {
+        const sets = [
+          [["triangle", "square", "circle"], "shape", ["shape", "animal", "weather", "tool"]],
+          [["hammer", "saw", "drill"], "tool", ["planet", "tool", "emotion", "color"]],
+          [["jazz", "blues", "salsa"], "music", ["mineral", "music", "vehicle", "fruit"]],
+          [["debug", "compile", "deploy"], "software", ["software", "garden", "storm", "kitchen"]]
+        ];
+        const set = sample(sets);
+        const extra = d >= 5 ? ` Extra clue: ${sample(["they are made by people", "they involve action", "they can be practiced"])}.` : "";
+        return {
+          type: "classification",
+          text: `What category connects these? ${set[0].join(", ")}.${extra}`,
+          answer: set[1],
+          options: shuffle(set[2]),
+          explanation: `All examples belong to the ${set[1]} category.`
+        };
+      }
+
+      function makeWorkingRuleQuestion(d) {
+        const letters = shuffle(["A", "B", "C", "D", "E", "F"]);
+        const shift = clamp(Math.ceil(d / 2), 1, 5);
+        const answer = letters[shift];
+        return {
+          type: "working rule",
+          text: `Letters: ${letters.join(" ")}. If the rule is "pick the item ${shift} spaces after the first letter," what do you pick?`,
+          answer,
+          options: shuffle(letters.slice(0, 4).includes(answer) ? letters.slice(0, 4) : [answer, ...letters.slice(0, 3)]),
+          explanation: `Count ${shift} spaces after the first item in the displayed order.`
+        };
+      }
+
+      function makeCaseReasoningQuestion(d) {
+        const drills = shuffle([
+          { name: "retrieval ladder", hours: 2 + Math.floor(d / 4), gain: 18 + d * 2, tag: "memory" },
+          { name: "interleaved set", hours: 3, gain: 20 + d * 3, tag: "reasoning" },
+          { name: "spatial chain", hours: 2 + Math.floor(d / 5), gain: 16 + d * 3, tag: "spatial" },
+          { name: "feedback review", hours: 2, gain: 15 + d * 2, tag: "feedback" },
+          { name: "creative constraint", hours: 3 + Math.floor(d / 6), gain: 19 + d * 2, tag: "creativity" }
+        ]).slice(0, 4);
+        const budget = 5 + Math.floor(d / 3);
+        const pairs = [];
+        for (let i = 0; i < drills.length; i += 1) {
+          for (let j = i + 1; j < drills.length; j += 1) {
+            const pair = [drills[i], drills[j]];
+            const hours = pair[0].hours + pair[1].hours;
+            const score = pair[0].gain + pair[1].gain - (pair[0].tag === pair[1].tag ? 8 : 0);
+            pairs.push({ pair, hours, score });
+          }
+        }
+        const valid = pairs.filter((item) => item.hours <= budget);
+        const best = (valid.length ? valid : pairs).sort((a, b) => b.score - a.score || a.hours - b.hours)[0];
+        const optionPool = shuffle(pairs).slice(0, 4);
+        if (!optionPool.some((item) => item === best)) optionPool[0] = best;
+        const answer = best.pair.map((item) => item.name).join(" + ");
+        const table = drills.map((item) => `${item.name}: ${item.hours}h, +${item.gain} transfer, ${item.tag}`).join("; ");
+        return {
+          type: "case reasoning",
+          text: `You are designing a hard 1-week training block. Pick exactly two drills under a ${budget}h budget. If two drills share the same tag, subtract 8 transfer points because the practice is less interleaved. Drill table: ${table}. Which pair gives the best valid transfer score?`,
+          answer,
+          options: shuffle(optionPool.map((item) => item.pair.map((drill) => drill.name).join(" + "))),
+          explanation: `${answer} fits ${best.hours}h and scores ${best.score}. This rewards interleaving plus explicit constraint checking.`
+        };
+      }
+
+      function makeEvidenceWeighingQuestion(d) {
+        const nA = 42 + d * 9 + Math.floor(Math.random() * 18);
+        const nB = 40 + d * 8 + Math.floor(Math.random() * 18);
+        const advantage = 0.08 + Math.random() * 0.08;
+        const base = 0.54 + Math.random() * 0.08;
+        const flip = Math.random() > 0.5;
+        const rateA = flip ? base - advantage : base + advantage;
+        const rateB = flip ? base + advantage : base - advantage;
+        const winsA = Math.round(nA * clamp(rateA, 0.35, 0.86));
+        const winsB = Math.round(nB * clamp(rateB, 0.35, 0.86));
+        const observedA = winsA / nA;
+        const observedB = winsB / nB;
+        const winner = observedA > observedB ? "spacing-first" : "blocked-first";
+        const answer = `${winner} is better supported, but the evidence is not causal proof`;
+        return {
+          type: "evidence weighing",
+          text: `A training team compares two schedules. Spacing-first: ${winsA}/${nA} users improved. Blocked-first: ${winsB}/${nB} users improved. Assignment was not fully random, but both groups used the same final test. Which conclusion is most defensible?`,
+          answer,
+          options: shuffle([
+            answer,
+            "both schedules are proven equal because both groups improved",
+            "the smaller raw failure count decides the stronger method",
+            "the result proves the schedule will transfer to every skill"
+          ]),
+          explanation: `Compare proportions, not raw counts: spacing-first ${Math.round(observedA * 100)}%, blocked-first ${Math.round(observedB * 100)}%. The nonrandom assignment limits the claim.`
+        };
+      }
+
+      function makeConstraintOptimizationQuestion(d) {
+        const options = [
+          { name: "retrieval", value: 16 + d * 2, fatigue: 3, kind: "memory" },
+          { name: "interleave", value: 18 + d * 2, fatigue: 4, kind: "selection" },
+          { name: "feedback", value: 14 + d, fatigue: 2, kind: "correction" },
+          { name: "spatial", value: 15 + d * 2, fatigue: 3 + Math.floor(d / 5), kind: "visual" },
+          { name: "incubation", value: 11 + d, fatigue: 1, kind: "creative" }
+        ];
+        const fatigueCap = 8 + Math.floor(d / 4);
+        const triples = [];
+        for (let a = 0; a < options.length; a += 1) {
+          for (let b = a + 1; b < options.length; b += 1) {
+            for (let c = b + 1; c < options.length; c += 1) {
+              const set = [options[a], options[b], options[c]];
+              const fatigue = set.reduce((sum, item) => sum + item.fatigue, 0);
+              const value = set.reduce((sum, item) => sum + item.value, 0) + new Set(set.map((item) => item.kind)).size * 3;
+              triples.push({ set, fatigue, value });
+            }
+          }
+        }
+        const valid = triples.filter((item) => item.fatigue <= fatigueCap);
+        const best = (valid.length ? valid : triples).sort((a, b) => b.value - a.value || a.fatigue - b.fatigue)[0];
+        const answer = best.set.map((item) => item.name).join(" + ");
+        const optionPool = shuffle(triples).slice(0, 4);
+        if (!optionPool.some((item) => item === best)) optionPool[0] = best;
+        return {
+          type: "constraint optimization",
+          text: `Build a 3-part session. Fatigue cap is ${fatigueCap}. Add +3 bonus points for each distinct practice kind, because mixed practice trains strategy selection. Options: ${options.map((item) => `${item.name} value ${item.value}, fatigue ${item.fatigue}, kind ${item.kind}`).join("; ")}. Which session has the best valid value?`,
+          answer,
+          options: shuffle(optionPool.map((item) => item.set.map((choice) => choice.name).join(" + "))),
+          explanation: `${answer} stays at fatigue ${best.fatigue} and scores ${best.value} after distinct-kind bonuses.`
+        };
+      }
+
+      function makeArgumentFlawQuestion(d) {
+        const cases = [
+          {
+            text: "A user improved after 3 days of n-back and claims the app permanently raised general intelligence. No control task was used, and sleep also improved that week.",
+            answer: "confounds and overgeneralized transfer",
+            explanation: "The evidence may reflect sleep, practice effects, or task familiarity; transfer needs stronger comparison."
+          },
+          {
+            text: "A quiz score rose from 40% to 85% on the same ten questions, so the user concludes they can solve any new logic problem.",
+            answer: "practice-test memorization mistaken for transfer",
+            explanation: "Repeated items can improve recall without proving flexible performance on unseen problems."
+          },
+          {
+            text: "One hard session felt frustrating, so the user concludes the method is ineffective even though delayed testing was never checked.",
+            answer: "judging learning by fluency instead of later performance",
+            explanation: "Desirable difficulties can feel worse during practice while helping later retention."
+          },
+          {
+            text: "A friend scored higher after using only blocked practice, so the user ignores a larger randomized class study favoring interleaving.",
+            answer: "anecdote outweighing stronger base evidence",
+            explanation: "A single case is weaker than a larger controlled comparison."
+          }
+        ];
+        const chosen = sample(cases);
+        return {
+          type: "argument flaw",
+          text: `Evaluate the reasoning. ${chosen.text} What is the main flaw?`,
+          answer: chosen.answer,
+          options: shuffle([
+            chosen.answer,
+            "the conclusion is definitely false because all training fails",
+            "the evidence is too mathematical to interpret",
+            d > 6 ? "the claim is correct because high effort always transfers" : "the claim is correct because the user felt progress"
+          ]),
+          explanation: chosen.explanation
+        };
+      }
+
+      function makeBayesianQuestion(d) {
+        const base = clamp(8 + d * 2, 10, 35);
+        const hit = clamp(70 + d * 2, 72, 93);
+        const falseAlarm = clamp(24 - d, 6, 22);
+        const numerator = base * hit;
+        const denominator = numerator + (100 - base) * falseAlarm;
+        const posterior = Math.round(numerator / denominator * 100);
+        return {
+          type: "Bayesian update",
+          text: `A detector flags whether a training method is genuinely helping. Before testing, ${base}% of methods are actually useful. The detector flags ${hit}% of useful methods and falsely flags ${falseAlarm}% of useless methods. If a method is flagged, what is the best estimate that it is actually useful?`,
+          answer: `${posterior}%`,
+          options: numberOptions(posterior, 18).map((item) => `${item}%`),
+          explanation: `Use base rates: useful flagged = ${base} x ${hit}; useless flagged = ${100 - base} x ${falseAlarm}. Posterior is useful-flagged divided by all flagged, about ${posterior}%.`
+        };
+      }
+
+      function makeCausalGraphQuestion(d) {
+        const scenarios = [
+          {
+            graph: "Sleep -> Focus -> Quiz score; Caffeine -> Focus; Caffeine -> Jitter",
+            intervention: "increase caffeine while holding sleep constant",
+            answer: "Focus may rise, quiz score may rise, and jitter may rise",
+            options: ["Sleep must rise first", "Focus may rise, quiz score may rise, and jitter may rise", "Only quiz score changes", "Jitter falls because focus rises"],
+            explanation: "An intervention on caffeine travels along outgoing arrows from caffeine, not backward into sleep."
+          },
+          {
+            graph: "Practice -> Accuracy; Practice -> Fatigue; Fatigue -> Accuracy down; Breaks -> Fatigue down",
+            intervention: "add breaks without changing practice amount",
+            answer: "Fatigue should fall, which can improve accuracy",
+            options: ["Practice amount must fall", "Fatigue should fall, which can improve accuracy", "Accuracy cannot change unless practice changes", "Breaks directly erase accuracy"],
+            explanation: "Breaks affect fatigue, and fatigue has a negative path into accuracy."
+          },
+          {
+            graph: "Problem difficulty -> Errors; Problem difficulty -> Effort; Effort -> Retention; Feedback -> Error correction",
+            intervention: "raise difficulty and add feedback",
+            answer: "Errors and effort can rise, while feedback can improve correction",
+            options: ["Errors must disappear immediately", "Effort must fall", "Errors and effort can rise, while feedback can improve correction", "Retention cannot change"],
+            explanation: "The intervention has two active paths: harder problems raise errors and effort, while feedback improves correction."
+          }
+        ];
+        const chosen = sample(scenarios);
+        return {
+          type: "causal graph",
+          text: `Causal graph: ${chosen.graph}. Intervention: ${chosen.intervention}. Which consequence follows best from the graph?`,
+          answer: chosen.answer,
+          options: shuffle(chosen.options),
+          explanation: chosen.explanation
+        };
+      }
+
+      function makeProofChainQuestion(d) {
+        const symbols = shuffle(["A", "B", "C", "D", "E", "F"]).slice(0, 5);
+        const chainLength = clamp(3 + Math.floor(d / 4), 3, 5);
+        const rules = [];
+        for (let i = 0; i < chainLength; i += 1) {
+          rules.push(`${symbols[i]} -> ${symbols[i + 1]}`);
+        }
+        const answer = symbols[chainLength];
+        const distractors = shuffle(symbols.filter((symbol) => symbol !== answer)).slice(0, 3);
+        return {
+          type: "proof chain",
+          text: `Given ${symbols[0]} is true. Rules: ${rules.join("; ")}. If every rule is valid, what is the farthest guaranteed conclusion?`,
+          answer,
+          options: shuffle([answer, ...distractors]),
+          explanation: `Apply each implication in order: ${symbols.slice(0, chainLength + 1).join(" -> ")}.`
+        };
+      }
+
+      function makeScheduleOptimizerQuestion(d) {
+        const tasks = [
+          { name: "retrieval", value: 18 + d, minutes: 12, fatigue: 2 },
+          { name: "spatial", value: 16 + d * 2, minutes: 14, fatigue: 3 },
+          { name: "focus", value: 14 + d, minutes: 9, fatigue: 2 },
+          { name: "systems", value: 20 + d * 2, minutes: 18, fatigue: 4 },
+          { name: "incubation", value: 13 + d, minutes: 8, fatigue: 1 }
+        ];
+        const minuteCap = 38 + d;
+        const fatigueCap = 7 + Math.floor(d / 4);
+        const combos = [];
+        for (let a = 0; a < tasks.length; a += 1) {
+          for (let b = a + 1; b < tasks.length; b += 1) {
+            for (let c = b + 1; c < tasks.length; c += 1) {
+              const set = [tasks[a], tasks[b], tasks[c]];
+              const minutes = set.reduce((sum, item) => sum + item.minutes, 0);
+              const fatigue = set.reduce((sum, item) => sum + item.fatigue, 0);
+              const value = set.reduce((sum, item) => sum + item.value, 0);
+              combos.push({ set, minutes, fatigue, value });
+            }
+          }
+        }
+        const valid = combos.filter((combo) => combo.minutes <= minuteCap && combo.fatigue <= fatigueCap);
+        const best = (valid.length ? valid : combos).sort((a, b) => b.value - a.value || a.minutes - b.minutes)[0];
+        const answer = best.set.map((item) => item.name).join(" + ");
+        const optionPool = shuffle(combos).slice(0, 4);
+        if (!optionPool.includes(best)) optionPool[0] = best;
+        return {
+          type: "schedule optimizer",
+          text: `Choose exactly 3 tasks. Limits: ${minuteCap} minutes and fatigue ${fatigueCap}. Tasks: ${tasks.map((item) => `${item.name} ${item.value} value, ${item.minutes}m, fatigue ${item.fatigue}`).join("; ")}. Which schedule has the highest valid value?`,
+          answer,
+          options: shuffle(optionPool.map((combo) => combo.set.map((item) => item.name).join(" + "))),
+          explanation: `${answer} uses ${best.minutes} minutes, fatigue ${best.fatigue}, and value ${best.value}.`
+        };
+      }
+
+      function makeMatrixReasoningQuestion(d) {
+        const rowStep = 2 + Math.floor(d / 4);
+        const colStep = 3 + Math.floor(d / 5);
+        const start = 4 + Math.floor(Math.random() * 9);
+        const grid = [
+          [start, start + colStep, start + colStep * 2],
+          [start + rowStep, start + rowStep + colStep, start + rowStep + colStep * 2],
+          [start + rowStep * 2, start + rowStep * 2 + colStep, "?"]
+        ];
+        const answer = start + rowStep * 2 + colStep * 2;
+        return {
+          type: "matrix reasoning",
+          text: `Complete the 3x3 matrix. Rows add ${rowStep}; columns add ${colStep}. Matrix: [${grid[0].join(", ")}] / [${grid[1].join(", ")}] / [${grid[2].join(", ")}]. What replaces ?`,
+          answer: String(answer),
+          options: numberOptions(answer, 12 + d * 2),
+          explanation: `Move down two rows: +${rowStep * 2}. Move right two columns: +${colStep * 2}. Final value is ${answer}.`
+        };
+      }
+
+      function makeStudyDesignQuestion(d) {
+        const n = 40 + d * 12;
+        const attrition = clamp(4 + Math.floor(d / 2), 5, 18);
+        const choices = [
+          "random assignment, pre/post tests, delayed transfer test, and attrition reported",
+          "only testimonials from users who finished the app",
+          "same quiz repeated until scores rise",
+          "compare beginners to experts after training without a baseline"
+        ];
+        return {
+          type: "study design",
+          text: `You want credible evidence that a new drill transfers beyond the trained task. You can recruit ${n} users, but expect ${attrition}% attrition. Which design is most reputable?`,
+          answer: choices[0],
+          options: shuffle(choices),
+          explanation: "Random assignment, baseline measurement, delayed transfer tests, and attrition reporting reduce common threats to training claims."
+        };
+      }
+
+      function makeFermiQuestion(d) {
+        const days = 5 + Math.floor(d / 3);
+        const reps = 18 + d * 2;
+        const retention = clamp(0.62 + d * 0.018, 0.64, 0.86);
+        const transfer = clamp(0.42 + d * 0.012, 0.44, 0.7);
+        const answer = Math.round(days * reps * retention * transfer);
+        return {
+          type: "fermi estimate",
+          text: `Estimate useful transfer reps from a week plan: ${days} practice days, ${reps} scored reps per day, ${Math.round(retention * 100)}% retained after spacing, and ${Math.round(transfer * 100)}% near-transfer usefulness. What is the best estimate?`,
+          answer: String(answer),
+          options: numberOptions(answer, 18 + d * 3),
+          explanation: `Multiply days x reps x retention x transfer: ${days} x ${reps} x ${retention.toFixed(2)} x ${transfer.toFixed(2)} = about ${answer}.`
+        };
+      }
+
+      function startQuiz() {
+        playSfx("start");
+        quiz.active = true;
+        quiz.answered = 0;
+        quiz.correct = 0;
+        quiz.target = Math.round((8 + Math.ceil(moduleDifficulty("questions") / 1.5) + problemDepth()) * sessionLoadMultiplier());
+        quiz.current = null;
+        quiz.locked = false;
+        $("#quizFeedback").textContent = "Quiz running. Choose the best answer.";
+        updateTrainingState();
+        nextQuestion();
+        renderQuizStats();
+      }
+
+      function nextQuestion() {
+        if (!quiz.active) {
+          startQuiz();
+          return;
+        }
+        if (quiz.current && !quiz.locked) {
+          $("#quizFeedback").textContent = "Answer the current problem before moving on. The score needs real attempts.";
+          playSfx("wrong");
+          return;
+        }
+        if (quiz.locked && quiz.answered >= quiz.target) {
+          finishQuiz();
+          return;
+        }
+        quiz.current = generateQuestion();
+        quiz.locked = false;
+        $("#questionText").textContent = quiz.current.text;
+        $("#questionType").textContent = quiz.current.type;
+        $("#nextQuestion").textContent = "Next";
+        renderAnswers();
+        renderQuizStats();
+        startAnswerTimer("questions", answerTimeLimit("questions"), timeoutQuestion);
+      }
+
+      function renderAnswers() {
+        const grid = $("#answerGrid");
+        grid.innerHTML = "";
+        answerOptions(quiz.current).forEach((option) => {
+          const button = document.createElement("button");
+          button.className = "answer-btn";
+          button.type = "button";
+          button.textContent = option;
+          on(button, "click", () => answerQuestion(button, option), "answer question");
+          grid.appendChild(button);
+        });
+      }
+
+      function answerQuestion(button, option) {
+        if (!quiz.active || quiz.locked) return;
+        stopAnswerTimer("questions");
+        quiz.locked = true;
+        quiz.answered += 1;
+        const correct = option === String(quiz.current.answer);
+        if (correct) quiz.correct += 1;
+        playSfx(correct ? "correct" : "wrong", { origin: elementCenter(button) });
+        $$("#answerGrid .answer-btn").forEach((item) => {
+          item.disabled = true;
+          if (item.textContent === String(quiz.current.answer)) item.classList.add("is-correct");
+        });
+        if (!correct) button.classList.add("is-wrong");
+        animateAnswerFeedback(button, correct);
+        $("#quizFeedback").textContent = correct
+          ? `Correct. ${quiz.current.explanation || "Good retrieval."}`
+          : `Not quite. Correct answer: ${quiz.current.answer}. ${quiz.current.explanation || ""}`;
+        $("#nextQuestion").textContent = quiz.answered >= quiz.target ? "Finish session" : "Next";
+        renderQuizStats();
+      }
+
+      function timeoutQuestion() {
+        if (!quiz.active || quiz.locked || !quiz.current) return;
+        quiz.locked = true;
+        quiz.answered += 1;
+        playSfx("wrong");
+        revealTimedOutAnswer("#answerGrid", quiz.current.answer);
+        $("#quizFeedback").textContent = `Time. Correct answer: ${quiz.current.answer}. ${quiz.current.explanation || ""}`;
+        $("#nextQuestion").textContent = quiz.answered >= quiz.target ? "Finish session" : "Next";
+        renderQuizStats();
+      }
+
+      function finishQuiz() {
+        stopAnswerTimer("questions");
+        if (!quiz.active || quiz.answered === 0) return;
+        const success = quiz.correct / quiz.answered;
+        const xp = quiz.correct * 24 + Math.round(success * 70);
+        $("#quizFeedback").textContent = `Quiz complete: ${quiz.correct}/${quiz.answered}, ${Math.round(success * 100)}%.`;
+        quiz.active = false;
+        updateTrainingState();
+        recordSession("questions", { success, xp, label: `${quiz.correct}/${quiz.answered} correct` });
+      }
+
+      function renderQuizStats() {
+        const d = moduleDifficulty("questions");
+        $("#questionDifficulty").textContent = `difficulty ${d}`;
+        $("#questionProgress").textContent = `${quiz.answered}/${quiz.target || 0}`;
+        $("#quizCorrect").textContent = quiz.correct;
+        $("#quizAsked").textContent = quiz.answered;
+        $("#quizTarget").textContent = quiz.target || Math.round((8 + Math.ceil(d / 1.5) + problemDepth()) * sessionLoadMultiplier());
+        $("#quizDifficulty").textContent = d;
+      }
+
+      function memoryConfig() {
+        const d = moduleDifficulty("memory");
+        const load = sessionLoadMultiplier();
+        const mode = memoryModes[state.modules.memory.mode] ? state.modules.memory.mode : memoryUnlockForDifficulty(d);
+        const modeDef = memoryModes[mode];
+        const pace = Math.round(finiteNumber(state.modules.memory.pace, 1, 0, 2));
+        const lure = Math.round(finiteNumber(state.modules.memory.lure, 1, 0, 2));
+        const globalLure = Math.round(finiteNumber(state.settings.lurePressure, 1, 0, 2));
+        const interference = state.modules.memory.interference !== false;
+        return {
+          mode,
+          modeDef,
+          pace,
+          lure,
+          interference,
+          matchRate: clamp(([0.44, 0.56, 0.68][lure] || 0.56) + (globalLure - 1) * 0.035, 0.36, 0.76),
+          lureRate: clamp(([0.12, 0.22, 0.34][lure] || 0.22) + (globalLure - 1) * 0.055, 0.06, 0.48),
+          n: clamp(1 + Math.floor(d / 2) + (mode === "quad" ? 1 : 0) + (pace === 2 ? 1 : 0), 1, 7),
+          total: Math.round((14 + d * 3 + modeDef.channels.length + pace * 3 + lure * 2) * load),
+          interval: clamp(1850 - d * 105 - modeDef.channels.length * 55 - pace * 170, 460, 1850),
+          grid: modeDef.grid,
+          channels: modeDef.channels
+        };
+      }
+
+      function startMemoryStream() {
+        if (memory.active) return;
+        const config = memoryConfig();
+        playSfx("start");
+        memory.active = true;
+        memory.n = config.n;
+        memory.mode = config.mode;
+        memory.total = config.total;
+        memory.trial = 0;
+        memory.correct = 0;
+        memory.channelCorrect = 0;
+        memory.channelTotal = 0;
+        memory.sequence = [];
+        memory.selected = new Set();
+        memory.answered = false;
+        $("#memoryFeedback").textContent = `Stream running: ${config.modeDef.description}`;
+        updateTrainingState();
+        updateMemoryAnswerButtons();
+        nextMemoryTrial();
+      }
+
+      function stopMemoryStream() {
+        if (!memory.active) return;
+        finishMemoryStream();
+      }
+
+      function nextMemoryTrial() {
+        window.clearTimeout(memory.timer);
+        stopAnswerTimer("memory");
+        if (!memory.active) return;
+        if (memory.trial >= memory.total) {
+          finishMemoryStream();
+          return;
+        }
+        if (!memory.answered && memory.trial > memory.n) {
+          $("#memoryFeedback").textContent = "Missed response. Answer before the next card.";
+          scoreMemoryMiss();
+          playSfx("wrong");
+        }
+        const config = memoryConfig();
+        memory.current = generateMemoryStimulus(config);
+        if (memory.trial >= memory.n && Math.random() < config.matchRate) {
+          const back = memory.sequence[memory.sequence.length - memory.n];
+          const matchCount = Math.random() < (config.lure >= 2 ? 0.36 : 0.2) ? 2 : 1;
+          shuffle(config.channels).slice(0, matchCount).forEach((channel) => {
+            if (channel === "symbol") memory.current.displaySymbol = back.displaySymbol;
+            if (channel === "position") memory.current.displayPosition = back.displayPosition;
+            if (channel === "color") memory.current.color = back.color;
+            if (channel === "transform") memory.current.transform = back.transform;
+          });
+        } else if (config.interference && memory.trial >= memory.n && Math.random() < config.lureRate) {
+          const nearBack = memory.sequence[Math.max(0, memory.sequence.length - Math.max(1, memory.n - 1))];
+          const channel = sample(config.channels);
+          memory.current.lureChannel = channel;
+          memory.current.lureDistance = Math.max(1, memory.n - 1);
+          if (channel === "symbol") memory.current.displaySymbol = nearBack.displaySymbol;
+          if (channel === "position") memory.current.displayPosition = nearBack.displayPosition;
+          if (channel === "color") memory.current.color = nearBack.color;
+          if (channel === "transform") memory.current.transform = nearBack.transform;
+        }
+        memory.sequence.push(memory.current);
+        memory.trial += 1;
+        memory.answered = false;
+        memory.selected = new Set();
+        playSfx("tick");
+        renderMemoryCard();
+        renderMemoryStats();
+        updateMemoryAnswerButtons();
+        memory.timer = startAnswerTimer("memory", answerTimeLimit("memory"), nextMemoryTrial);
+      }
+
+      function scoreMemoryMiss() {
+        const channels = memoryConfig().channels;
+        memory.channelTotal += channels.length;
+        memory.answered = true;
+      }
+
+      function generateMemoryStimulus(config) {
+        const symbols = ["A", "K", "M", "R", "S", "T", "Z", "7", "9"];
+        const colors = ["green", "blue", "yellow", "red", "violet"];
+        const transforms = config.channels.includes("transform") ? ["normal", "mirror", "rotate", "shift"] : ["normal"];
+        const rawSymbol = sample(symbols);
+        const transform = sample(transforms);
+        const rawPosition = Math.floor(Math.random() * config.grid * config.grid);
+        return {
+          rawSymbol,
+          displaySymbol: transformSymbol(rawSymbol, transform),
+          rawPosition,
+          displayPosition: transformPosition(rawPosition, transform, config.grid),
+          color: sample(colors),
+          transform,
+          grid: config.grid
+        };
+      }
+
+      function transformSymbol(symbol, transform) {
+        const symbols = ["A", "K", "M", "R", "S", "T", "Z", "7", "9"];
+        if (transform === "shift") return symbols[(symbols.indexOf(symbol) + 1 + symbols.length) % symbols.length];
+        if (transform === "mirror") return `${symbol}<`;
+        if (transform === "rotate") return `${symbol}^`;
+        return symbol;
+      }
+
+      function transformPosition(position, transform, grid) {
+        const row = Math.floor(position / grid);
+        const col = position % grid;
+        if (transform === "mirror") return row * grid + (grid - 1 - col);
+        if (transform === "rotate") return col * grid + (grid - 1 - row);
+        if (transform === "shift") return ((row + 1) % grid) * grid + col;
+        return position;
+      }
+
+      function memoryExpected() {
+        const config = memoryConfig();
+        const expected = { symbol: false, position: false, color: false, transform: false };
+        if (memory.sequence.length <= memory.n) return expected;
+        const current = memory.current;
+        const back = memory.sequence[memory.sequence.length - 1 - memory.n];
+        expected.symbol = config.channels.includes("symbol") && current.displaySymbol === back.displaySymbol;
+        expected.position = config.channels.includes("position") && current.displayPosition === back.displayPosition;
+        expected.color = config.channels.includes("color") && current.color === back.color;
+        expected.transform = config.channels.includes("transform") && current.transform === back.transform;
+        return expected;
+      }
+
+      function answerMemory(kind) {
+        if (!memory.active || memory.answered) return;
+        if (kind === "none") {
+          memory.selected.clear();
+          submitMemoryAnswer();
+          return;
+        }
+        if (memory.selected.has(kind)) {
+          memory.selected.delete(kind);
+        } else {
+          memory.selected.add(kind);
+        }
+        playSfx("select");
+        updateMemoryAnswerButtons();
+      }
+
+      function updateMemoryAnswerButtons() {
+        updateMemoryModeButtons();
+      }
+
+      function submitMemoryAnswer() {
+        if (!memory.active || memory.answered) return;
+        const expected = memoryExpected();
+        const channels = memoryConfig().channels;
+        const answer = {
+          symbol: memory.selected.has("symbol"),
+          position: memory.selected.has("position"),
+          color: memory.selected.has("color"),
+          transform: memory.selected.has("transform")
+        };
+        const channelCorrect = channels.filter((channel) => expected[channel] === answer[channel]).length;
+        const correct = channelCorrect === channels.length;
+        memory.channelCorrect += channelCorrect;
+        memory.channelTotal += channels.length;
+        memory.answered = true;
+        if (correct) memory.correct += 1;
+        playSfx(correct ? "correct" : "wrong");
+        const expectedList = channels.filter((channel) => expected[channel]);
+        $("#memoryFeedback").textContent = correct
+          ? `Exact channel decision. +${channels.length}/${channels.length}`
+          : `Channel score ${channelCorrect}/${channels.length}. Expected: ${expectedList.length ? expectedList.join(", ") : "no match"}.`;
+        memory.selected.clear();
+        updateMemoryAnswerButtons();
+        renderMemoryStats();
+      }
+
+      function renderMemoryCard() {
+        const config = memoryConfig();
+        const grid = $("#memoryGrid");
+        const neededCells = config.grid * config.grid;
+        grid.dataset.size = config.grid;
+        while (grid.children.length < neededCells) {
+          grid.appendChild(document.createElement("span"));
+        }
+        while (grid.children.length > neededCells) {
+          grid.lastElementChild.remove();
+        }
+        const colorMap = {
+          green: "var(--green)",
+          blue: "var(--blue)",
+          yellow: "var(--yellow)",
+          red: "var(--red)",
+          violet: "var(--violet)"
+        };
+        $("#memorySymbol").textContent = memory.current ? memory.current.displaySymbol : "?";
+        $("#memorySymbol").style.color = memory.current ? colorMap[memory.current.color] : "var(--ink)";
+        $("#memoryMeta").textContent = `${config.modeDef.label} / ${config.channels.join(" + ")}`;
+        $("#memoryManipulation").textContent = memory.current
+          ? `${memory.current.transform}${memory.current.lureChannel ? ` / ${memory.current.lureDistance}-back ${memory.current.lureChannel} lure` : ""}`
+          : "normal";
+        $$("#memoryGrid span").forEach((cell, index) => {
+          const shouldLight = Boolean(memory.current && index === memory.current.displayPosition);
+          const wasLit = cell.classList.contains("is-lit");
+          cell.classList.toggle("is-lit", shouldLight);
+          if (wasLit && !shouldLight) {
+            cell.classList.add("was-lit");
+            window.setTimeout(() => cell.classList.remove("was-lit"), 820);
+          }
+        });
+      }
+
+      function finishMemoryStream() {
+        window.clearTimeout(memory.timer);
+        stopAnswerTimer("memory");
+        const attempted = Math.max(memory.trial, 1);
+        const exactRate = memory.correct / attempted;
+        const channelRate = memory.channelTotal ? memory.channelCorrect / memory.channelTotal : 0;
+        const success = exactRate * 0.62 + channelRate * 0.38;
+        const xp = memory.correct * 18 + Math.round(channelRate * 95) + memoryConfig().channels.length * 12;
+        memory.active = false;
+        updateTrainingState();
+        $("#memoryFeedback").textContent = `Stream complete: ${memory.correct}/${attempted} exact, ${Math.round(channelRate * 100)}% channel accuracy at ${memory.n}-back.`;
+        recordSession("memory", { success, xp, label: `${memory.correct}/${attempted} exact, ${Math.round(channelRate * 100)}% channel` });
+      }
+
+      function renderMemoryStats() {
+        const config = memoryConfig();
+        $("#memoryDifficulty").textContent = moduleDifficulty("memory");
+        $("#memoryN").textContent = memory.active ? memory.n : config.n;
+        $("#memoryTrial").textContent = `${memory.trial}/${memory.active ? memory.total : config.total}`;
+        $("#memoryCorrect").textContent = memory.correct;
+        $("#memoryModeLabel").textContent = config.modeDef.label;
+        $("#memoryChannels").textContent = config.channels.length;
+        $("#memoryTier").textContent = `T${clamp(Math.ceil(moduleDifficulty("memory") / 2), 1, 6)}`;
+        $("#memoryLoadScore").textContent = Math.round(config.n * config.channels.length * config.grid * (1 + config.pace * 0.18 + config.lure * 0.14));
+        $("#memoryUnlock").textContent = "all modes open";
+        updateMemoryModeButtons();
+      }
+
+      function setMemoryMode(mode) {
+        if (!memoryModes[mode]) return;
+        state.modules.memory.mode = mode;
+        saveState();
+        playSfx("select");
+        renderMemoryStats();
+        renderMemoryCard();
+      }
+
+      function updateMemoryModeButtons() {
+        $$("[data-memory-mode]").forEach((button) => {
+          const unlocked = modeUnlocked(button.dataset.memoryMode);
+          button.disabled = memory.active;
+          button.classList.toggle("is-active", button.dataset.memoryMode === memoryConfig().mode);
+          button.textContent = memoryModes[button.dataset.memoryMode].label;
+        });
+        $$(".memory-answer").forEach((button) => {
+          const channel = button.dataset.memoryAnswer;
+          const enabled = memoryConfig().channels.includes(channel);
+          button.disabled = !enabled || !memory.active || memory.answered;
+          button.classList.toggle("is-selected", memory.selected.has(channel));
+        });
+        $("#memoryNoMatch").disabled = !memory.active || memory.answered;
+        $("#memorySubmit").disabled = !memory.active || memory.answered;
+      }
+
+      function saveMemoryAdvancedSettings() {
+        state.modules.memory.pace = Number($("#memoryPaceSelect").value);
+        state.modules.memory.lure = Number($("#memoryLureSelect").value);
+        state.modules.memory.interference = $("#memoryInterferenceToggle").checked;
+        state.modules.memory = sanitizeModule("memory", state.modules.memory);
+        saveState();
+        renderMemoryStats();
+        renderMemoryCard();
+        showToast("N-back settings saved");
+      }
+
+      function focusConfig() {
+        const d = moduleDifficulty("focus");
+        return {
+          total: Math.round((14 + d * 3) * sessionLoadMultiplier()),
+          congruentRate: clamp(0.38 - d * 0.034, 0.08, 0.38),
+          targetMs: clamp(1150 - d * 72, 480, 1150)
+        };
+      }
+
+      function startFocusSet() {
+        if (focus.active) return;
+        const config = focusConfig();
+        playSfx("start");
+        focus.active = true;
+        focus.trial = 0;
+        focus.total = config.total;
+        focus.correct = 0;
+        focus.reactionTotal = 0;
+        $("#focusFeedback").textContent = "Set running. Answer the ink color.";
+        updateTrainingState();
+        nextFocusTrial();
+      }
+
+      function stopFocusSet() {
+        if (!focus.active) return;
+        finishFocusSet();
+      }
+
+      function nextFocusTrial() {
+        window.clearTimeout(focus.timer);
+        stopAnswerTimer("focus");
+        if (!focus.active) return;
+        if (focus.trial >= focus.total) {
+          finishFocusSet();
+          return;
+        }
+        const colors = ["red", "blue", "green", "yellow"];
+        const word = sample(colors);
+        const config = focusConfig();
+        const ink = Math.random() < config.congruentRate ? word : sample(colors.filter((color) => color !== word));
+        focus.currentColor = ink;
+        focus.trial += 1;
+        focus.answered = false;
+        playSfx("tick");
+        const wordEl = $("#focusWord");
+        swapFocusWord(wordEl, word, ink);
+        $("#focusCue").textContent = `Trial ${focus.trial}/${focus.total}. Choose ink color.`;
+        renderFocusStats();
+        window.clearTimeout(focus.wordTimer);
+        focus.wordTimer = window.setTimeout(() => {
+          focus.shownAt = performance.now();
+          focus.timer = startAnswerTimer("focus", answerTimeLimit("focus"), timeoutFocusTrial);
+        }, state.settings.lowMotion ? 0 : 85);
+      }
+
+      function swapFocusWord(wordEl, word, ink) {
+        const palette = {
+          red: "var(--red)",
+          blue: "var(--blue)",
+          green: "var(--green)",
+          yellow: "var(--yellow)"
+        };
+        wordEl.classList.remove("is-entering", "is-conflict");
+        wordEl.classList.add("is-changing");
+        window.setTimeout(() => {
+          if (!focus.active || focus.answered) return;
+          wordEl.textContent = word;
+          wordEl.style.color = palette[ink];
+          wordEl.classList.remove("is-changing");
+          wordEl.classList.toggle("is-conflict", ink !== word);
+          triggerClassPulse(wordEl, "is-entering", 120);
+        }, state.settings.lowMotion ? 0 : 80);
+      }
+
+      function answerFocus(color) {
+        if (!focus.active || focus.answered) return;
+        window.clearTimeout(focus.timer);
+        stopAnswerTimer("focus");
+        focus.answered = true;
+        const rt = performance.now() - focus.shownAt;
+        const correct = color === focus.currentColor;
+        if (correct) {
+          focus.correct += 1;
+          focus.reactionTotal += rt;
+        }
+        playSfx(correct ? "correct" : "wrong");
+        $("#focusFeedback").textContent = correct ? `Correct in ${Math.round(rt)}ms.` : `Wrong. Ink color was ${focus.currentColor}.`;
+        renderFocusStats();
+        window.setTimeout(nextFocusTrial, correct ? 260 : 650);
+      }
+
+      function timeoutFocusTrial() {
+        if (!focus.active || focus.answered) return;
+        focus.answered = true;
+        $("#focusFeedback").textContent = `Timeout. Ink color was ${focus.currentColor}.`;
+        playSfx("wrong");
+        renderFocusStats();
+        window.setTimeout(nextFocusTrial, 520);
+      }
+
+      function finishFocusSet() {
+        window.clearTimeout(focus.timer);
+        window.clearTimeout(focus.wordTimer);
+        stopAnswerTimer("focus");
+        focus.active = false;
+        updateTrainingState();
+        const attempted = Math.max(focus.trial, 1);
+        const accuracy = focus.correct / attempted;
+        const avgRt = focus.correct ? focus.reactionTotal / focus.correct : 9999;
+        const speedScore = clamp(1 - (avgRt - 450) / 1300, 0, 1);
+        const success = accuracy * 0.72 + speedScore * 0.28;
+        const xp = focus.correct * 16 + Math.round(speedScore * 65);
+        $("#focusFeedback").textContent = `Set complete: ${focus.correct}/${attempted}, avg ${Math.round(avgRt)}ms.`;
+        recordSession("focus", { success, xp, label: `${focus.correct}/${attempted}, ${Math.round(avgRt)}ms avg` });
+      }
+
+      function renderFocusStats() {
+        $("#focusDifficulty").textContent = moduleDifficulty("focus");
+        $("#focusTrial").textContent = `${focus.trial}/${focus.active ? focus.total : focusConfig().total}`;
+        $("#focusCorrect").textContent = focus.correct;
+        const avgRt = focus.correct ? Math.round(focus.reactionTotal / focus.correct) : 0;
+        $("#focusRt").textContent = `${avgRt}ms`;
+      }
+
+      function creativeConfig() {
+        const d = moduleDifficulty("creativity");
+        return {
+          target: Math.round((8 + d * 3) * sessionLoadMultiplier()),
+          seconds: 55 + d * 5,
+          constraints: clamp(1 + Math.ceil(d / 2), 2, 6)
+        };
+      }
+
+      function generateCreativePrompt() {
+        const d = moduleDifficulty("creativity");
+        const base = sample(promptParts[creativeMethod]);
+        const constraints = [
+          "make one idea useful for a beginner",
+          "include a scoring rule",
+          "include a five minute version",
+          "remove the most obvious feature",
+          "add one feedback loop",
+          "make it work without instructions"
+        ];
+        const chosen = shuffle(constraints).slice(0, creativeConfig().constraints);
+        creative.prompt = `${base} Constraint set d${d}: ${chosen.join("; ")}.`;
+        $("#creativePrompt").textContent = creative.prompt;
+        if (audio.armed) playSfx("prompt");
+      }
+
+      function startCreativeSprint() {
+        const config = creativeConfig();
+        playSfx("start");
+        creative.active = true;
+        creative.seconds = config.seconds;
+        creative.remaining = config.seconds;
+        $("#ideaBox").focus();
+        $("#creativeFeedback").textContent = "Sprint running. One idea per line. Do not judge yet.";
+        updateTrainingState();
+        window.clearInterval(creative.timer);
+        creative.timer = window.setInterval(() => {
+          creative.remaining = Math.max(0, creative.remaining - 1);
+          renderCreativeConfig();
+          if (creative.remaining === 0) expireCreativeSprint();
+        }, 1000);
+        startAnswerTimer("creativity", answerTimeLimit("creativity"), expireCreativeSprint);
+        renderCreativeConfig();
+      }
+
+      function expireCreativeSprint() {
+        if (!creative.active) return;
+        window.clearInterval(creative.timer);
+        stopAnswerTimer("creativity");
+        creative.remaining = 0;
+        creative.active = false;
+        updateTrainingState();
+        renderCreativeConfig();
+        $("#creativeFeedback").textContent = "Timer done. Score the sprint when ready.";
+      }
+
+      function ideaLines() {
+        return $("#ideaBox").value.split(/\n|;/).map((line) => line.trim()).filter(Boolean);
+      }
+
+      function uniqueKeywordCount(lines) {
+        const words = new Set();
+        lines.join(" ").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).forEach((word) => {
+          if (word.length > 4) words.add(word);
+        });
+        return words.size;
+      }
+
+      function scoreCreativeSprint() {
+        const lines = ideaLines();
+        if (!lines.length) {
+          $("#creativeFeedback").textContent = "Write at least one idea first.";
+          return;
+        }
+        window.clearInterval(creative.timer);
+        stopAnswerTimer("creativity");
+        creative.active = false;
+        updateTrainingState();
+        const config = creativeConfig();
+        const variety = uniqueKeywordCount(lines);
+        const constraintTerms = ["score", "rule", "test", "measure", "beginner", "timer", "feedback", "prototype", "constraint"];
+        const constraintHits = constraintTerms.filter((term) => $("#ideaBox").value.toLowerCase().includes(term)).length;
+        const countScore = clamp(lines.length / config.target, 0, 1);
+        const varietyScore = clamp(variety / (config.target * 2.4), 0, 1);
+        const elaboration = clamp(lines.filter((line) => line.length > 34).length / Math.max(1, lines.length), 0, 1);
+        const constraintScore = clamp(constraintHits / 4, 0, 1);
+        const success = countScore * 0.46 + varietyScore * 0.22 + elaboration * 0.17 + constraintScore * 0.15;
+        const xp = lines.length * 12 + Math.round(varietyScore * 55) + Math.round(elaboration * 45) + Math.round(constraintScore * 40);
+        $("#creativeFeedback").textContent = `Scored ${lines.length} ideas, ${variety} varied keywords, ${constraintHits} objective terms, ${Math.round(success * 100)}% session strength.`;
+        playSfx(success > 0.72 ? "correct" : "tick");
+        recordSession("creativity", { success, xp, label: `${lines.length} ideas, ${variety} varied keywords` });
+      }
+
+      function renderCreativeConfig() {
+        const config = creativeConfig();
+        const count = ideaLines().length;
+        $("#creativeDifficulty").textContent = moduleDifficulty("creativity");
+        $("#creativeTarget").textContent = config.target;
+        $("#creativeCount").textContent = count;
+        const remaining = creative.active ? creative.remaining : config.seconds;
+        const minutes = Math.floor(remaining / 60).toString().padStart(2, "0");
+        const seconds = Math.floor(remaining % 60).toString().padStart(2, "0");
+        $("#creativeTimer").textContent = `${minutes}:${seconds}`;
+      }
+
+      function generateAnalogyChallenge() {
+        const d = moduleDifficulty("analogy");
+        const desiredDistance = d >= 7 ? "far" : d >= 4 ? "medium" : "near";
+        const candidates = analogySources.filter((item) => item.distance === desiredDistance);
+        const source = sample(candidates.length ? candidates : analogySources);
+        $("#analogySource").textContent = `Source domain: ${source.domain}. Map ${source.structures.join(", ")} onto the target problem.`;
+        $("#analogyDistance").textContent = source.distance;
+        $("#mapOne").value = "";
+        $("#mapTwo").value = "";
+        $("#mapThree").value = "";
+        $("#mapFour").value = "";
+        $("#analogyFeedback").textContent = "New transfer challenge ready. Fill the structure, mapping, prototype, and test fields.";
+        if (audio.armed) playSfx("prompt");
+        renderAnalogyStats();
+        if (currentView === "analogy") startAnswerTimer("analogy", answerTimeLimit("analogy"), timeoutAnalogy);
+      }
+
+      function analogyTextParts() {
+        return [$("#mapOne").value.trim(), $("#mapTwo").value.trim(), $("#mapThree").value.trim(), $("#mapFour").value.trim()];
+      }
+
+      function analogyRubric() {
+        const parts = analogyTextParts();
+        const structureWords = ["structure", "pattern", "feedback", "timing", "system", "rule", "loop", "signal", "constraint", "flow", "recovery", "memory", "response"];
+        const mappingWords = ["maps", "becomes", "transfers", "turns", "means", "so", "because", "therefore", "into"];
+        const testWords = ["test", "measure", "prototype", "try", "compare", "track", "score", "observe", "experiment"];
+        const structure = clamp((parts[0].split(/\s+/).filter(Boolean).length / 18) * 0.55 + keywordHit(parts[0], structureWords) * 0.45, 0, 1);
+        const mapping = clamp((parts[1].split(/\s+/).filter(Boolean).length / 22) * 0.55 + keywordHit(parts[1], mappingWords) * 0.45, 0, 1);
+        const prototype = clamp(parts[2].split(/\s+/).filter(Boolean).length / 22, 0, 1);
+        const test = clamp((parts[3].split(/\s+/).filter(Boolean).length / 18) * 0.45 + keywordHit(parts[3], testWords) * 0.55, 0, 1);
+        return { structure, mapping, prototype, test };
+      }
+
+      function keywordHit(text, words) {
+        const lower = text.toLowerCase();
+        const hits = words.filter((word) => lower.includes(word)).length;
+        return clamp(hits / 2, 0, 1);
+      }
+
+      function timeoutAnalogy() {
+        if (!analogyTextParts().filter(Boolean).length) {
+          $("#analogyFeedback").textContent = "Time. No mapping recorded. Generate another challenge or write a partial transfer map.";
+          renderAnalogyStats();
+          updateTrainingState();
+          return;
+        }
+        scoreAnalogy({ timedOut: true });
+      }
+
+      function scoreAnalogy(options = {}) {
+        const parts = analogyTextParts();
+        const filled = parts.filter(Boolean).length;
+        const words = parts.join(" ").split(/\s+/).filter(Boolean).length;
+        if (!filled) {
+          $("#analogyFeedback").textContent = "Add at least one mapping before scoring.";
+          return;
+        }
+        stopAnswerTimer("analogy");
+        const rubric = analogyRubric();
+        const filledScore = filled / 4;
+        const success = filledScore * 0.24 + rubric.structure * 0.22 + rubric.mapping * 0.24 + rubric.prototype * 0.12 + rubric.test * 0.18;
+        const xp = filled * 26 + Math.round(success * 105);
+        const prefix = options && options.timedOut ? "Time. " : "";
+        $("#analogyFeedback").textContent = `${prefix}Transfer scored: ${filled}/4 fields, ${words} words, ${Math.round(success * 100)}% objective strength.`;
+        renderAnalogyStats();
+        playSfx(success > 0.68 ? "correct" : "tick");
+        recordSession("analogy", { success, xp, label: `${filled}/4 fields, ${Math.round(success * 100)}% transfer` });
+      }
+
+      function renderAnalogyStats() {
+        const parts = analogyTextParts();
+        const filled = parts.filter(Boolean).length;
+        const words = parts.join(" ").split(/\s+/).filter(Boolean).length;
+        const rubric = analogyRubric();
+        $("#analogyDifficulty").textContent = moduleDifficulty("analogy");
+        $("#analogyFilled").textContent = `${filled}/4`;
+        $("#analogyWords").textContent = words;
+        $("#analogyStructureScore").textContent = `${Math.round(rubric.structure * 100)}%`;
+        $("#analogyMapScore").textContent = `${Math.round(rubric.mapping * 100)}%`;
+        $("#analogyTestScore").textContent = `${Math.round(rubric.test * 100)}%`;
+        refreshRubricArcs();
+      }
+
+      function spatialConfig() {
+        const d = moduleDifficulty("spatial");
+        return {
+          grid: clamp(4 + Math.floor(d / 3), 4, 7),
+          steps: clamp(2 + Math.ceil(d / 2), 3, 9),
+          target: Math.round((5 + Math.ceil(d / 2)) * sessionLoadMultiplier())
+        };
+      }
+
+      function coordinateLabel(position, grid) {
+        const row = Math.floor(position / grid);
+        const col = position % grid;
+        return `${String.fromCharCode(65 + row)}${col + 1}`;
+      }
+
+      function applySpatialTransform(position, transform, grid) {
+        const row = Math.floor(position / grid);
+        const col = position % grid;
+        const amount = transform.amount || 1;
+        if (transform.kind === "mirror vertical") return row * grid + (grid - 1 - col);
+        if (transform.kind === "mirror horizontal") return (grid - 1 - row) * grid + col;
+        if (transform.kind === "rotate clockwise") return col * grid + (grid - 1 - row);
+        if (transform.kind === "rotate counterclockwise") return (grid - 1 - col) * grid + row;
+        if (transform.kind === "shift east") return row * grid + ((col + amount) % grid);
+        if (transform.kind === "shift west") return row * grid + ((col - amount + grid * 4) % grid);
+        if (transform.kind === "shift south") return ((row + amount) % grid) * grid + col;
+        if (transform.kind === "shift north") return ((row - amount + grid * 4) % grid) * grid + col;
+        return position;
+      }
+
+      function spatialTransformPool(d) {
+        const shifts = ["shift east", "shift west", "shift north", "shift south"].map((kind) => ({ kind, amount: 1 + Math.floor(Math.random() * clamp(Math.ceil(d / 4), 1, 3)) }));
+        const transforms = [
+          { kind: "mirror vertical" },
+          { kind: "mirror horizontal" },
+          { kind: "rotate clockwise" },
+          { kind: "rotate counterclockwise" },
+          ...shifts
+        ];
+        return transforms;
+      }
+
+      function generateSpatialProblem() {
+        const config = spatialConfig();
+        const d = moduleDifficulty("spatial");
+        const start = Math.floor(Math.random() * config.grid * config.grid);
+        let current = start;
+        const trace = [coordinateLabel(start, config.grid)];
+        const tracePositions = [start];
+        const transforms = [];
+        for (let i = 0; i < config.steps; i += 1) {
+          const transform = sample(spatialTransformPool(d));
+          transforms.push(transform);
+          current = applySpatialTransform(current, transform, config.grid);
+          tracePositions.push(current);
+          trace.push(coordinateLabel(current, config.grid));
+        }
+        const answer = coordinateLabel(current, config.grid);
+        const optionSet = new Set([answer]);
+        while (optionSet.size < 4) {
+          const offset = Math.floor(Math.random() * config.grid * config.grid);
+          optionSet.add(coordinateLabel(offset, config.grid));
+        }
+        const transformText = transforms.map((item, index) => {
+          const suffix = item.kind.startsWith("shift") ? ` ${item.amount}` : "";
+          return `${index + 1}. ${item.kind}${suffix}`;
+        }).join("; ");
+        spatial.current = {
+          grid: config.grid,
+          start,
+          goal: current,
+          answer,
+          options: shuffle([...optionSet]),
+          tracePositions,
+          text: `Grid ${config.grid} x ${config.grid}. Start at ${coordinateLabel(start, config.grid)}. Apply these transformations in order: ${transformText}. What is the final coordinate?`,
+          explanation: `Trace: ${trace.join(" -> ")}.`
+        };
+      }
+
+      function startSpatialSet() {
+        playSfx("start");
+        spatial.active = true;
+        spatial.answered = 0;
+        spatial.correct = 0;
+        spatial.target = spatialConfig().target;
+        spatial.current = null;
+        spatial.locked = false;
+        $("#spatialFeedback").textContent = "Spatial set running. Track the marker mentally before choosing.";
+        updateTrainingState();
+        nextSpatialProblem();
+      }
+
+      function nextSpatialProblem() {
+        if (!spatial.active) {
+          startSpatialSet();
+          return;
+        }
+        if (spatial.current && !spatial.locked) {
+          $("#spatialFeedback").textContent = "Answer the current chain before moving on. Spatial scoring needs exact attempts.";
+          playSfx("wrong");
+          return;
+        }
+        if (spatial.locked && spatial.answered >= spatial.target) {
+          finishSpatialSet();
+          return;
+        }
+        spatial.locked = false;
+        generateSpatialProblem();
+        $("#spatialPrompt").textContent = spatial.current.text;
+        $("#nextSpatial").textContent = "Next";
+        renderSpatialBoard(false);
+        renderSpatialAnswers();
+        renderSpatialStats();
+        startAnswerTimer("spatial", answerTimeLimit("spatial"), timeoutSpatial);
+      }
+
+      function renderSpatialBoard(showGoal) {
+        const board = $("#spatialBoard");
+        const config = spatial.current || { grid: spatialConfig().grid, start: -1, goal: -1 };
+        const cellCount = config.grid * config.grid;
+        board.style.setProperty("--spatial-grid", config.grid);
+        board.innerHTML = "";
+        for (let i = 0; i < cellCount; i += 1) {
+          const cell = document.createElement("span");
+          cell.className = "spatial-cell";
+          cell.textContent = coordinateLabel(i, config.grid);
+          cell.classList.toggle("is-start", i === config.start);
+          cell.classList.toggle("is-goal", showGoal && i === config.goal);
+          board.appendChild(cell);
+        }
+      }
+
+      function animateSpatialTrace() {
+        if (state.settings.lowMotion || !spatial.current?.tracePositions?.length) return;
+        const cells = $$("#spatialBoard .spatial-cell");
+        spatial.current.tracePositions.forEach((position, index) => {
+          window.setTimeout(() => {
+            const cell = cells[position];
+            if (!cell) return;
+            cell.classList.add("is-trace");
+            window.setTimeout(() => cell.classList.remove("is-trace"), 260);
+          }, index * 80);
+        });
+      }
+
+      function renderSpatialAnswers() {
+        const grid = $("#spatialAnswerGrid");
+        grid.innerHTML = "";
+        spatial.current.options.forEach((option) => {
+          const button = document.createElement("button");
+          button.className = "answer-btn";
+          button.type = "button";
+          button.textContent = option;
+          on(button, "click", () => answerSpatial(button, option), "answer spatial");
+          grid.appendChild(button);
+        });
+      }
+
+      function answerSpatial(button, option) {
+        if (!spatial.active || spatial.locked) return;
+        stopAnswerTimer("spatial");
+        spatial.locked = true;
+        spatial.answered += 1;
+        const correct = option === spatial.current.answer;
+        if (correct) spatial.correct += 1;
+        playSfx(correct ? "correct" : "wrong", { origin: elementCenter(button) });
+        $$("#spatialAnswerGrid .answer-btn").forEach((item) => {
+          item.disabled = true;
+          if (item.textContent === spatial.current.answer) item.classList.add("is-correct");
+        });
+        if (!correct) button.classList.add("is-wrong");
+        animateAnswerFeedback(button, correct);
+        renderSpatialBoard(true);
+        animateSpatialTrace();
+        $("#spatialFeedback").textContent = correct
+          ? `Correct. ${spatial.current.explanation}`
+          : `Not quite. Correct coordinate: ${spatial.current.answer}. ${spatial.current.explanation}`;
+        $("#nextSpatial").textContent = spatial.answered >= spatial.target ? "Finish set" : "Next";
+        renderSpatialStats();
+      }
+
+      function timeoutSpatial() {
+        if (!spatial.active || spatial.locked || !spatial.current) return;
+        spatial.locked = true;
+        spatial.answered += 1;
+        playSfx("wrong");
+        revealTimedOutAnswer("#spatialAnswerGrid", spatial.current.answer);
+        renderSpatialBoard(true);
+        animateSpatialTrace();
+        $("#spatialFeedback").textContent = `Time. Correct coordinate: ${spatial.current.answer}. ${spatial.current.explanation}`;
+        $("#nextSpatial").textContent = spatial.answered >= spatial.target ? "Finish set" : "Next";
+        renderSpatialStats();
+      }
+
+      function finishSpatialSet() {
+        stopAnswerTimer("spatial");
+        if (!spatial.active || spatial.answered === 0) return;
+        const success = spatial.correct / spatial.answered;
+        const config = spatialConfig();
+        const xp = spatial.correct * 22 + Math.round(success * 90) + config.steps * 6;
+        spatial.active = false;
+        updateTrainingState();
+        $("#spatialFeedback").textContent = `Spatial set complete: ${spatial.correct}/${spatial.answered}, ${Math.round(success * 100)}% accuracy on ${config.grid} x ${config.grid} chains.`;
+        recordSession("spatial", { success, xp, label: `${spatial.correct}/${spatial.answered} spatial chains` });
+      }
+
+      function renderSpatialStats() {
+        const config = spatialConfig();
+        $("#spatialDifficulty").textContent = `difficulty ${moduleDifficulty("spatial")}`;
+        $("#spatialProgress").textContent = `${spatial.answered}/${spatial.target || config.target}`;
+        $("#spatialMode").textContent = `${config.steps}-step transform`;
+        $("#spatialDifficultySide").textContent = moduleDifficulty("spatial");
+        $("#spatialGridSize").textContent = `${config.grid} x ${config.grid}`;
+        $("#spatialSteps").textContent = config.steps;
+        $("#spatialCorrect").textContent = spatial.correct;
+        if (!spatial.current) renderSpatialBoard(false);
+      }
+
+      function calibrationConfig() {
+        const d = moduleDifficulty("calibration");
+        return {
+          target: Math.round((4 + Math.ceil(d / 2) + problemDepth()) * sessionLoadMultiplier())
+        };
+      }
+
+      function generateCalibrationQuestion() {
+        const d = moduleDifficulty("calibration") + problemDepth();
+        const generators = [makeEvidenceWeighingQuestion, makeCaseReasoningQuestion, makeConstraintOptimizationQuestion, makeArgumentFlawQuestion];
+        calibration.current = sample(generators)(d);
+      }
+
+      function startCalibrationSet() {
+        playSfx("start");
+        calibration.active = true;
+        calibration.answered = 0;
+        calibration.correct = 0;
+        calibration.confidenceTotal = 0;
+        calibration.brierTotal = 0;
+        calibration.target = calibrationConfig().target;
+        calibration.current = null;
+        calibration.locked = false;
+        calibration.selected = "";
+        $("#calibrationFeedback").textContent = "Calibration running. Pick an answer, then watch whether confidence matched performance.";
+        updateTrainingState();
+        nextCalibrationQuestion();
+      }
+
+      function nextCalibrationQuestion() {
+        if (!calibration.active) {
+          startCalibrationSet();
+          return;
+        }
+        if (calibration.current && !calibration.locked) {
+          $("#calibrationFeedback").textContent = "Answer the current evidence problem before moving on. Calibration needs confidence tied to an attempt.";
+          playSfx("wrong");
+          return;
+        }
+        if (calibration.locked && calibration.answered >= calibration.target) {
+          finishCalibrationSet();
+          return;
+        }
+        calibration.locked = false;
+        calibration.selected = "";
+        generateCalibrationQuestion();
+        $("#calibrationText").textContent = calibration.current.text;
+        $("#nextCalibration").textContent = "Next";
+        renderCalibrationAnswers();
+        renderCalibrationStats();
+        startAnswerTimer("calibration", answerTimeLimit("calibration"), timeoutCalibration);
+      }
+
+      function renderCalibrationAnswers() {
+        const grid = $("#calibrationAnswerGrid");
+        grid.innerHTML = "";
+        answerOptions(calibration.current).forEach((option) => {
+          const button = document.createElement("button");
+          button.className = "answer-btn";
+          button.type = "button";
+          button.textContent = option;
+          on(button, "click", () => answerCalibration(button, option), "answer calibration");
+          grid.appendChild(button);
+        });
+      }
+
+      function answerCalibration(button, option) {
+        if (!calibration.active || calibration.locked) return;
+        stopAnswerTimer("calibration");
+        calibration.locked = true;
+        calibration.selected = option;
+        calibration.answered += 1;
+        const confidence = Number($("#confidenceSlider").value) / 100;
+        const correct = option === String(calibration.current.answer);
+        if (correct) calibration.correct += 1;
+        const brier = Math.pow(confidence - (correct ? 1 : 0), 2);
+        calibration.confidenceTotal += confidence;
+        calibration.brierTotal += brier;
+        playSfx(correct ? "correct" : "wrong", { origin: elementCenter(button) });
+        $$("#calibrationAnswerGrid .answer-btn").forEach((item) => {
+          item.disabled = true;
+          if (item.textContent === String(calibration.current.answer)) item.classList.add("is-correct");
+        });
+        if (!correct) button.classList.add("is-wrong");
+        animateAnswerFeedback(button, correct);
+        $("#calibrationFeedback").textContent = correct
+          ? `Correct at ${Math.round(confidence * 100)}% confidence. Brier penalty ${brier.toFixed(2)}. ${calibration.current.explanation}`
+          : `Wrong at ${Math.round(confidence * 100)}% confidence. Correct: ${calibration.current.answer}. Brier penalty ${brier.toFixed(2)}. ${calibration.current.explanation}`;
+        $("#nextCalibration").textContent = calibration.answered >= calibration.target ? "Finish set" : "Next";
+        renderCalibrationStats();
+      }
+
+      function timeoutCalibration() {
+        if (!calibration.active || calibration.locked || !calibration.current) return;
+        calibration.locked = true;
+        calibration.selected = "timeout";
+        calibration.answered += 1;
+        const confidence = Number($("#confidenceSlider").value) / 100;
+        const brier = Math.pow(confidence, 2);
+        calibration.confidenceTotal += confidence;
+        calibration.brierTotal += brier;
+        playSfx("wrong");
+        revealTimedOutAnswer("#calibrationAnswerGrid", calibration.current.answer);
+        $("#calibrationFeedback").textContent = `Time. Counted as wrong at ${Math.round(confidence * 100)}% confidence. Correct: ${calibration.current.answer}. Brier penalty ${brier.toFixed(2)}. ${calibration.current.explanation}`;
+        $("#nextCalibration").textContent = calibration.answered >= calibration.target ? "Finish set" : "Next";
+        renderCalibrationStats();
+      }
+
+      function finishCalibrationSet() {
+        stopAnswerTimer("calibration");
+        if (!calibration.active || calibration.answered === 0) return;
+        calibration.active = false;
+        updateTrainingState();
+        const accuracy = calibration.correct / calibration.answered;
+        const avgBrier = calibration.brierTotal / calibration.answered;
+        const calibrationScore = clamp(1 - avgBrier, 0, 1);
+        const success = accuracy * 0.66 + calibrationScore * 0.34;
+        const xp = calibration.correct * 24 + Math.round(calibrationScore * 100);
+        $("#calibrationFeedback").textContent = `Calibration complete: ${calibration.correct}/${calibration.answered}, avg Brier ${avgBrier.toFixed(2)}, score ${Math.round(success * 100)}%.`;
+        recordSession("calibration", { success, xp, label: `${calibration.correct}/${calibration.answered}, Brier ${avgBrier.toFixed(2)}` });
+      }
+
+      function renderCalibrationStats() {
+        const config = calibrationConfig();
+        const avgConfidence = calibration.answered ? calibration.confidenceTotal / calibration.answered : 0;
+        const avgBrier = calibration.answered ? calibration.brierTotal / calibration.answered : null;
+        $("#calibrationDifficulty").textContent = `difficulty ${moduleDifficulty("calibration")}`;
+        $("#calibrationProgress").textContent = `${calibration.answered}/${calibration.target || config.target}`;
+        $("#calibrationBrier").textContent = avgBrier === null ? "brier --" : `brier ${avgBrier.toFixed(2)}`;
+        $("#calibrationDifficultySide").textContent = moduleDifficulty("calibration");
+        $("#calibrationCorrect").textContent = calibration.correct;
+        $("#calibrationConfidence").textContent = `${Math.round(avgConfidence * 100)}%`;
+        $("#calibrationScore").textContent = avgBrier === null ? "--" : `${Math.round(clamp(1 - avgBrier, 0, 1) * 100)}%`;
+        $("#confidenceLabel").textContent = `${$("#confidenceSlider").value}%`;
+      }
+
+      function systemsConfig() {
+        const d = moduleDifficulty("systems");
+        return {
+          target: Math.round((5 + Math.ceil(d / 2) + problemDepth()) * sessionLoadMultiplier()),
+          detail: finiteNumber($("#systemsDetailSelect")?.value, problemDepth(), 1, 3)
+        };
+      }
+
+      function generateSystemsProblem() {
+        const mode = state.modules.systems.mode || "mixed";
+        const d = moduleDifficulty("systems") + systemsConfig().detail;
+        const generators = {
+          causal: [makeCausalGraphQuestion],
+          bayes: [makeBayesianQuestion],
+          proof: [makeProofChainQuestion],
+          schedule: [makeScheduleOptimizerQuestion],
+          mixed: [makeCausalGraphQuestion, makeBayesianQuestion, makeProofChainQuestion, makeScheduleOptimizerQuestion, makeConstraintOptimizationQuestion, makeMatrixReasoningQuestion, makeStudyDesignQuestion, makeFermiQuestion]
+        };
+        systems.current = sample(generators[mode] || generators.mixed)(d);
+      }
+
+      function startSystemsSet() {
+        playSfx("start");
+        systems.active = true;
+        systems.answered = 0;
+        systems.correct = 0;
+        systems.target = systemsConfig().target;
+        systems.current = null;
+        systems.locked = false;
+        systems.mode = state.modules.systems.mode || "mixed";
+        $("#systemsFeedback").textContent = "Systems set running. Read the whole structure before choosing.";
+        updateTrainingState();
+        nextSystemsProblem();
+      }
+
+      function nextSystemsProblem() {
+        if (!systems.active) {
+          startSystemsSet();
+          return;
+        }
+        if (systems.current && !systems.locked) {
+          $("#systemsFeedback").textContent = "Answer the current systems problem before moving on.";
+          playSfx("wrong");
+          return;
+        }
+        if (systems.locked && systems.answered >= systems.target) {
+          finishSystemsSet();
+          return;
+        }
+        systems.locked = false;
+        generateSystemsProblem();
+        $("#systemsText").textContent = systems.current.text;
+        $("#systemsType").textContent = systems.current.type;
+        $("#nextSystems").textContent = "Next";
+        renderSystemsAnswers();
+        renderSystemsStats();
+        startAnswerTimer("systems", answerTimeLimit("systems"), timeoutSystems);
+      }
+
+      function renderSystemsAnswers() {
+        const grid = $("#systemsAnswerGrid");
+        grid.innerHTML = "";
+        answerOptions(systems.current).forEach((option) => {
+          const button = document.createElement("button");
+          button.className = "answer-btn";
+          button.type = "button";
+          button.textContent = option;
+          on(button, "click", () => answerSystems(button, option), "answer systems");
+          grid.appendChild(button);
+        });
+      }
+
+      function answerSystems(button, option) {
+        if (!systems.active || systems.locked) return;
+        stopAnswerTimer("systems");
+        systems.locked = true;
+        systems.answered += 1;
+        const correct = option === String(systems.current.answer);
+        if (correct) systems.correct += 1;
+        playSfx(correct ? "correct" : "wrong", { origin: elementCenter(button) });
+        $$("#systemsAnswerGrid .answer-btn").forEach((item) => {
+          item.disabled = true;
+          if (item.textContent === String(systems.current.answer)) item.classList.add("is-correct");
+        });
+        if (!correct) button.classList.add("is-wrong");
+        animateAnswerFeedback(button, correct);
+        $("#systemsFeedback").textContent = correct
+          ? `Correct. ${systems.current.explanation}`
+          : `Not quite. Correct answer: ${systems.current.answer}. ${systems.current.explanation}`;
+        $("#nextSystems").textContent = systems.answered >= systems.target ? "Finish set" : "Next";
+        renderSystemsStats();
+      }
+
+      function timeoutSystems() {
+        if (!systems.active || systems.locked || !systems.current) return;
+        systems.locked = true;
+        systems.answered += 1;
+        playSfx("wrong");
+        revealTimedOutAnswer("#systemsAnswerGrid", systems.current.answer);
+        $("#systemsFeedback").textContent = `Time. Correct answer: ${systems.current.answer}. ${systems.current.explanation}`;
+        $("#nextSystems").textContent = systems.answered >= systems.target ? "Finish set" : "Next";
+        renderSystemsStats();
+      }
+
+      function finishSystemsSet() {
+        stopAnswerTimer("systems");
+        if (!systems.active || systems.answered === 0) return;
+        const success = systems.correct / systems.answered;
+        const xp = systems.correct * 30 + Math.round(success * 120) + moduleDifficulty("systems") * 8;
+        systems.active = false;
+        updateTrainingState();
+        $("#systemsFeedback").textContent = `Systems set complete: ${systems.correct}/${systems.answered}, ${Math.round(success * 100)}%.`;
+        recordSession("systems", { success, xp, label: `${systems.correct}/${systems.answered} systems problems` });
+      }
+
+      function setSystemsMode(mode) {
+        state.modules.systems.mode = ["mixed", "causal", "bayes", "proof", "schedule"].includes(mode) ? mode : "mixed";
+        systems.mode = state.modules.systems.mode;
+        saveState();
+        renderSystemsStats();
+      }
+
+      function renderSystemsStats() {
+        const config = systemsConfig();
+        const mode = state.modules.systems.mode || "mixed";
+        $("#systemsDifficulty").textContent = `difficulty ${moduleDifficulty("systems")}`;
+        $("#systemsProgress").textContent = `${systems.answered}/${systems.target || config.target}`;
+        $("#systemsDifficultySide").textContent = moduleDifficulty("systems");
+        $("#systemsTarget").textContent = systems.target || config.target;
+        $("#systemsCorrect").textContent = systems.correct;
+        $("#systemsModeLabel").textContent = mode;
+        $("#systemsModeSelect").value = mode;
+        $("#systemsDetailSelect").value = String(config.detail);
+      }
+
+      const rintRelationBank = {
+        spatial: [
+          { key: "left-of", label: "left of", phrase: (a, b) => `${a} is left of ${b}.`, inverse: "right-of" },
+          { key: "right-of", label: "right of", phrase: (a, b) => `${a} is right of ${b}.`, inverse: "left-of" },
+          { key: "above", label: "above", phrase: (a, b) => `${a} is above ${b}.`, inverse: "below" },
+          { key: "below", label: "below", phrase: (a, b) => `${a} is below ${b}.`, inverse: "above" },
+          { key: "inside", label: "inside", phrase: (a, b) => `${a} is inside ${b}.`, inverse: "contains" },
+          { key: "contains", label: "contains", phrase: (a, b) => `${a} contains ${b}.`, inverse: "inside" }
+        ],
+        trait: [
+          { key: "same-shape", label: "same trait", phrase: (a, b) => `${a} shares the defining trait of ${b}.`, inverse: "opposite-trait" },
+          { key: "opposite-trait", label: "opposite trait", phrase: (a, b) => `${a} has the opposite defining trait from ${b}.`, inverse: "same-shape" },
+          { key: "more-stable", label: "more stable", phrase: (a, b) => `${a} is more stable than ${b}.`, inverse: "less-stable" },
+          { key: "less-stable", label: "less stable", phrase: (a, b) => `${a} is less stable than ${b}.`, inverse: "more-stable" },
+          { key: "same-class", label: "same class", phrase: (a, b) => `${a} belongs to the same abstract class as ${b}.`, inverse: "different-class" },
+          { key: "different-class", label: "different class", phrase: (a, b) => `${a} belongs to a different abstract class from ${b}.`, inverse: "same-class" }
+        ],
+        quant: [
+          { key: "greater-than", label: "greater than", phrase: (a, b) => `${a} is greater than ${b}.`, inverse: "less-than" },
+          { key: "less-than", label: "less than", phrase: (a, b) => `${a} is less than ${b}.`, inverse: "greater-than" },
+          { key: "twice", label: "twice", phrase: (a, b) => `${a} is twice ${b}.`, inverse: "half" },
+          { key: "half", label: "half", phrase: (a, b) => `${a} is half of ${b}.`, inverse: "twice" },
+          { key: "difference-plus", label: "positive difference", phrase: (a, b) => `${a} exceeds ${b} by a hidden constant.`, inverse: "difference-minus" },
+          { key: "difference-minus", label: "negative difference", phrase: (a, b) => `${a} trails ${b} by a hidden constant.`, inverse: "difference-plus" }
+        ],
+        semantic: [
+          { key: "causes", label: "causes", phrase: (a, b) => `${a} causes ${b}.`, inverse: "caused-by" },
+          { key: "caused-by", label: "caused by", phrase: (a, b) => `${a} is caused by ${b}.`, inverse: "causes" },
+          { key: "category-of", label: "category of", phrase: (a, b) => `${a} is a category that includes ${b}.`, inverse: "instance-of" },
+          { key: "instance-of", label: "instance of", phrase: (a, b) => `${a} is an instance of ${b}.`, inverse: "category-of" },
+          { key: "enables", label: "enables", phrase: (a, b) => `${a} enables ${b}.`, inverse: "requires" },
+          { key: "requires", label: "requires", phrase: (a, b) => `${a} requires ${b}.`, inverse: "enables" }
+        ],
+        comparison: [
+          { key: "more-abstract", label: "more abstract", phrase: (a, b) => `${a} is more abstract than ${b}.`, inverse: "more-concrete" },
+          { key: "more-concrete", label: "more concrete", phrase: (a, b) => `${a} is more concrete than ${b}.`, inverse: "more-abstract" },
+          { key: "broader", label: "broader", phrase: (a, b) => `${a} is broader in scope than ${b}.`, inverse: "narrower" },
+          { key: "narrower", label: "narrower", phrase: (a, b) => `${a} is narrower in scope than ${b}.`, inverse: "broader" },
+          { key: "stronger-evidence", label: "stronger evidence", phrase: (a, b) => `${a} gives stronger evidence than ${b}.`, inverse: "weaker-evidence" },
+          { key: "weaker-evidence", label: "weaker evidence", phrase: (a, b) => `${a} gives weaker evidence than ${b}.`, inverse: "stronger-evidence" }
+        ],
+        temporal: [
+          { key: "before", label: "before", phrase: (a, b) => `${a} happens before ${b}.`, inverse: "after" },
+          { key: "after", label: "after", phrase: (a, b) => `${a} happens after ${b}.`, inverse: "before" },
+          { key: "overlaps", label: "overlaps", phrase: (a, b) => `${a} overlaps in time with ${b}.`, inverse: "separate-from" },
+          { key: "separate-from", label: "separate from", phrase: (a, b) => `${a} is temporally separate from ${b}.`, inverse: "overlaps" },
+          { key: "starts", label: "starts", phrase: (a, b) => `${a} starts ${b}.`, inverse: "ends" },
+          { key: "ends", label: "ends", phrase: (a, b) => `${a} ends ${b}.`, inverse: "starts" }
+        ],
+        directional: [
+          { key: "flows-to", label: "flows to", phrase: (a, b) => `${a} flows toward ${b}.`, inverse: "flows-from" },
+          { key: "flows-from", label: "flows from", phrase: (a, b) => `${a} flows from ${b}.`, inverse: "flows-to" },
+          { key: "points-at", label: "points at", phrase: (a, b) => `${a} points at ${b}.`, inverse: "pointed-from" },
+          { key: "pointed-from", label: "pointed from", phrase: (a, b) => `${a} is pointed to by ${b}.`, inverse: "points-at" },
+          { key: "clockwise-from", label: "clockwise from", phrase: (a, b) => `${a} is clockwise from ${b}.`, inverse: "counterclockwise-from" },
+          { key: "counterclockwise-from", label: "counterclockwise from", phrase: (a, b) => `${a} is counterclockwise from ${b}.`, inverse: "clockwise-from" }
+        ]
+      };
+
+      const rintTokenPools = {
+        symbols: ["△", "□", "◇", "○", "✕", "＋", "∴", "≋", "⌬", "⬡", "◌", "▱"],
+        words: ["ember", "vector", "signal", "orbit", "archive", "cipher", "hinge", "mirror", "pulse", "thread", "matrix", "anchor"],
+        nonsense: ["mavik", "loren", "daxu", "sirel", "nobo", "keth", "vuna", "prax", "zolin", "femer", "tavil", "rukem"],
+        alphanumeric: ["A7", "K2", "M9", "Q4", "R8", "T1", "Z6", "B3", "L5", "X0", "N4", "V8"]
+      };
+
+      function rintCategoryKeys() {
+        return Object.keys(rintRelationBank);
+      }
+
+      function rintAllowedCategories(relationSet = "all") {
+        const map = {
+          all: rintCategoryKeys(),
+          verbal: ["semantic", "comparison"],
+          "verbal-semantic": ["semantic"],
+          "verbal-comparison": ["comparison"],
+          quant: ["quant"],
+          quantitative: ["quant"],
+          spatial: ["spatial"],
+          trait: ["trait"],
+          temporal: ["temporal"],
+          directional: ["directional"],
+          semantic: ["semantic"],
+          comparison: ["comparison"]
+        };
+        return (map[relationSet] || map.all).filter((key) => rintRelationBank[key]);
+      }
+
+      function rintRecommendedStage() {
+        const sessions = state.modules.rint.sessions || 0;
+        if (sessions < 5) return "calibration";
+        if (sessions < 20) return "load";
+        return "mixed";
+      }
+
+      function rintConfig() {
+        const d = moduleDifficulty("rint");
+        const saved = state.modules.rint;
+        const stage = ["calibration", "load", "mixed"].includes(saved.stage) ? saved.stage : rintRecommendedStage();
+        const relationSet = saved.relationSet || "all";
+        const tokenMode = saved.tokenMode || "mixed";
+        const stageIsCalibration = stage === "calibration";
+        const nMin = stageIsCalibration ? 2 : clamp(Math.round(finiteNumber(saved.nMin, 2, 2, 4)), 2, 4);
+        const nMax = stageIsCalibration ? 2 : clamp(Math.round(finiteNumber(saved.nMax, 4, nMin, 4)), nMin, 4);
+        const mixedSwitch = saved.switchMode || (stage === "mixed" ? "mixed" : "rint");
+        const switchMode = stage === "mixed" ? mixedSwitch : (mixedSwitch === "binary" ? "binary" : "rint");
+        const globalLure = Math.round(finiteNumber(state.settings.lurePressure, 1, 0, 2));
+        return {
+          d,
+          stage,
+          relationSet,
+          tokenMode: stage === "mixed" ? tokenMode : (tokenMode === "mixed" ? "mixed" : tokenMode),
+          switchMode,
+          categories: rintAllowedCategories(relationSet),
+          nMin,
+          nMax,
+          distractors: !stageIsCalibration && (saved.distractors !== false),
+          matchRate: clamp(0.42 + globalLure * 0.035, 0.38, 0.58),
+          total: Math.round((14 + d * 2 + problemDepth() * 2 + (stage === "mixed" ? 5 : 0)) * sessionLoadMultiplier())
+        };
+      }
+
+      function startRintStream() {
+        if (rint.active) return;
+        const config = rintConfig();
+        playSfx("start");
+        rint.active = true;
+        rint.trial = 0;
+        rint.total = config.total;
+        rint.correct = 0;
+        rint.hits = 0;
+        rint.falseAlarms = 0;
+        rint.misses = 0;
+        rint.missedResponses = 0;
+        rint.correctRejects = 0;
+        rint.n = config.nMin;
+        rint.stage = config.stage;
+        rint.current = null;
+        rint.sequence = [];
+        rint.categoryStats = {};
+        rint.locked = false;
+        rint.startTime = performance.now();
+        $("#rintFeedback").textContent = `${rintStageBrief(config.stage)} First ${config.nMin}-back comparisons warm up before matches can appear.`;
+        updateTrainingState();
+        nextRintTrial();
+      }
+
+      function stopRintStream() {
+        if (!rint.active) return;
+        finishRintStream(true);
+      }
+
+      function nextRintTrial() {
+        if (!rint.active) {
+          startRintStream();
+          return;
+        }
+        if (!rint.locked && rint.current) return;
+        if (rint.trial >= rint.total) {
+          finishRintStream();
+          return;
+        }
+        const config = rintConfig();
+        rint.trial += 1;
+        rint.n = chooseRintN(config);
+        rint.locked = false;
+        rint.current = generateRintTrial({ ...config, n: rint.n });
+        rint.current.trialNumber = rint.trial;
+        rint.sequence.push(rint.current);
+        renderRintTrial();
+        renderRintStats();
+        startAnswerTimer("rint", answerTimeLimit("rint"), timeoutRintTrial);
+      }
+
+      function chooseRintN(config) {
+        if (config.stage === "calibration") return 2;
+        if (!rint.trial) return config.nMin;
+        const accuracy = rint.correct / Math.max(1, rint.trial);
+        const base = config.nMin + Math.floor((config.d + problemDepth() - 1) / 4);
+        const performanceStep = accuracy >= 0.86 ? 1 : accuracy < 0.52 ? -1 : 0;
+        return clamp(base + performanceStep, config.nMin, config.nMax);
+      }
+
+      function generateRintTrial(config) {
+        const mode = chooseRintTaskMode(config);
+        const rawBack = rawRintBackItem(config.n);
+        const back = findRintBackItem(config.n, mode);
+        const canMatch = Boolean(back);
+        const shouldMatch = canMatch && Math.random() < config.matchRate;
+        const item = makeRintItem(config, { mode, matchBack: shouldMatch ? back : null, avoidBack: shouldMatch ? null : back });
+        item.taskMode = mode;
+        item.shouldMatch = shouldMatch;
+        item.backItem = rawBack;
+        item.compareItem = back;
+        item.backSummary = rintBackSummary(rawBack, back, mode);
+        item.currentState = rintStateLabel(item, mode);
+        item.isDistractor = !shouldMatch && Boolean(back) && isRintNearMiss(item, back, mode);
+        item.explanation = rintExplanation(item, mode);
+        return item;
+      }
+
+      function chooseRintTaskMode(config) {
+        if (config.switchMode === "normal") return "normal";
+        if (config.switchMode === "type") return "type";
+        if (config.switchMode === "binary") return "binary";
+        if (config.switchMode === "mixed") return sample(["rint", "rint", "type", "normal", "binary"]);
+        return "rint";
+      }
+
+      function rawRintBackItem(n) {
+        if (rint.sequence.length < n) return null;
+        return rint.sequence[rint.sequence.length - n] || null;
+      }
+
+      function findRintBackItem(n, mode) {
+        const candidate = rawRintBackItem(n);
+        if (!candidate) return null;
+        if (mode === "binary") return candidate.taskMode === "binary" ? candidate : null;
+        return candidate.taskMode === "binary" ? null : candidate;
+      }
+
+      function makeRintItem(config, options = {}) {
+        if (options.mode === "binary") return makeBinaryRintItem(config, options);
+        let item = null;
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+          const source = options.matchBack;
+          const category = source && options.mode === "type"
+            ? source.category
+            : source && options.mode === "rint"
+              ? source.category
+              : sample(config.categories);
+          const relationDef = source && options.mode === "rint"
+            ? relationByKey(source.category, source.relationKey)
+            : chooseRelationForCategory(category, options.avoidBack, config.distractors);
+          const tokens = source && options.mode === "normal" ? source.tokens.slice() : rintTokens(config, 2);
+          item = {
+            taskMode: options.mode || "rint",
+            category,
+            relationKey: relationDef.key,
+            relationLabel: relationDef.label,
+            tokens,
+            premise: relationDef.phrase(tokens[0], tokens[1])
+          };
+          if (!options.avoidBack || rintSignature(item, options.mode) !== rintSignature(options.avoidBack, options.mode)) break;
+        }
+        return item;
+      }
+
+      function makeBinaryRintItem(config, options = {}) {
+        const source = options.matchBack;
+        const targetTruth = source && typeof source.binaryTruth === "boolean"
+          ? source.binaryTruth
+          : options.avoidBack && typeof options.avoidBack.binaryTruth === "boolean"
+            ? !options.avoidBack.binaryTruth
+            : Math.random() < 0.5;
+        const [a, b, c] = rintTokens(config, 3);
+        const relation = sample([
+          { name: "greater than", inverse: "less than", family: "quant" },
+          { name: "before", inverse: "after", family: "temporal" },
+          { name: "left of", inverse: "right of", family: "spatial" },
+          { name: "more abstract than", inverse: "more concrete than", family: "comparison" }
+        ]);
+        const claim = targetTruth
+          ? `${a} is ${relation.name} ${c}`
+          : `${c} is ${relation.name} ${a}`;
+        return {
+          taskMode: "binary",
+          category: `binary-${relation.family}`,
+          relationKey: targetTruth ? "valid-chain" : "invalid-chain",
+          relationLabel: targetTruth ? "valid binary chain" : "invalid binary chain",
+          binaryTruth: targetTruth,
+          tokens: [a, b, c],
+          premise: `${a} is ${relation.name} ${b}. ${b} is ${relation.name} ${c}. Claim: ${claim}.`
+        };
+      }
+
+      function relationByKey(category, key) {
+        return (rintRelationBank[category] || []).find((item) => item.key === key) || sample(rintRelationBank[category] || rintRelationBank.spatial);
+      }
+
+      function chooseRelationForCategory(category, avoidBack, preferNearMiss) {
+        const relations = rintRelationBank[category] || rintRelationBank.spatial;
+        if (avoidBack && preferNearMiss && avoidBack.category === category) {
+          const inverse = relations.find((item) => item.key === relationByKey(category, avoidBack.relationKey).inverse);
+          if (inverse) return inverse;
+        }
+        const filtered = avoidBack && avoidBack.category === category ? relations.filter((item) => item.key !== avoidBack.relationKey) : relations;
+        return sample(filtered.length ? filtered : relations);
+      }
+
+      function rintTokens(config, count = 2) {
+        const modes = config.tokenMode === "mixed" ? Object.keys(rintTokenPools) : [config.tokenMode];
+        const pool = shuffle(modes.flatMap((mode) => rintTokenPools[mode] || rintTokenPools.words));
+        const tokens = [];
+        pool.forEach((token) => {
+          if (tokens.length < count && !tokens.includes(token)) tokens.push(token);
+        });
+        while (tokens.length < count) tokens.push(`${sample(["Q", "R", "S", "T"])}${Math.floor(Math.random() * 90 + 10)}`);
+        return tokens;
+      }
+
+      function rintSignature(item, mode) {
+        if (!item) return "";
+        if (mode === "normal") return item.tokens.join("|");
+        if (mode === "type") return item.category;
+        if (mode === "binary") return String(Boolean(item.binaryTruth));
+        return `${item.category}:${item.relationKey}`;
+      }
+
+      function rintStateLabel(item, mode) {
+        if (!item) return "none";
+        if (mode === "normal") return `tokens ${item.tokens.join(" / ")}`;
+        if (mode === "type") return `category ${item.category.replace("binary-", "")}`;
+        if (mode === "binary") return item.binaryTruth ? "valid relation chain" : "invalid relation chain";
+        return `${item.category.replace("semantic", "verbal-semantic").replace("comparison", "verbal-comparison")} / ${item.relationLabel}`;
+      }
+
+      function rintBackSummary(rawBack, back, mode) {
+        if (!rawBack) return "not enough history";
+        if (!back) return `trial ${rawBack.trialNumber || "?"} is a different switch family`;
+        return rintStateLabel(back, mode);
+      }
+
+      function isRintNearMiss(item, back, mode) {
+        if (!item || !back) return false;
+        if (mode === "normal") return item.tokens.some((token) => back.tokens.includes(token));
+        if (mode === "type") return item.category !== back.category && item.relationKey === back.relationKey;
+        if (mode === "binary") return item.binaryTruth !== back.binaryTruth;
+        return item.category === back.category && item.relationKey !== back.relationKey;
+      }
+
+      function rintExplanation(item, mode) {
+        const task = {
+          normal: "Normal switch compares exact token pair identity.",
+          type: "Type switch compares the relation category only.",
+          binary: "Binary switch compares whether the chain is logically valid.",
+          rint: "RINT compares the abstract relation state, not the surface tokens."
+        }[mode] || "RINT compares the abstract relation state.";
+        return `${task} Current: ${item.currentState}. N-back: ${item.backSummary}.`;
+      }
+
+      function rintModeLabel(mode) {
+        return {
+          normal: "token pair",
+          type: "category",
+          binary: "chain truth",
+          rint: "relation state"
+        }[mode] || "relation state";
+      }
+
+      function rintCleanCategory(category = "") {
+        return String(category || "mixed").replace("binary-", "").replace("semantic", "verbal-semantic").replace("comparison", "verbal-comparison");
+      }
+
+      function rintDiagramFamily(item) {
+        const raw = rintCleanCategory(item?.category || "");
+        if (["spatial", "directional", "temporal", "quant", "trait", "comparison", "semantic"].includes(raw)) return raw;
+        if (raw === "verbal-semantic") return "semantic";
+        if (raw === "verbal-comparison") return "comparison";
+        return "mixed";
+      }
+
+      function rintVisualToken(value, label) {
+        return `<div class="rint-node"><span>${escapeHtml(value || "?")}</span><em>${escapeHtml(label)}</em></div>`;
+      }
+
+      function rintDiagramHtml(item, mode = item?.taskMode || "rint") {
+        if (!item) {
+          return `<div class="rint-diagram is-empty"><span>No N-back target yet.</span></div>`;
+        }
+        if (item.taskMode === "binary") return rintBinaryDiagramHtml(item);
+        const family = rintDiagramFamily(item);
+        const tokens = item.tokens || ["?", "?"];
+        const relationLabel = mode === "normal"
+          ? "same pair"
+          : mode === "type"
+            ? rintCleanCategory(item.category)
+            : item.relationLabel;
+        return `
+          <div class="rint-diagram rint-diagram-${escapeHtml(family)}">
+            <div class="rint-relation-canvas">
+              ${rintVisualToken(tokens[0], "A")}
+              <div class="rint-relation-line"><span>${escapeHtml(relationLabel)}</span></div>
+              ${rintVisualToken(tokens[1], "B")}
+            </div>
+          </div>
+        `;
+      }
+
+      function rintBinaryDiagramHtml(item) {
+        const tokens = item.tokens || ["A", "B", "C"];
+        const [premise, claim = "Claim pending"] = String(item.premise || "").split("Claim:");
+        const status = item.binaryTruth ? "valid chain" : "invalid chain";
+        return `
+          <div class="rint-diagram rint-diagram-binary">
+            <div class="rint-binary-canvas">
+              ${rintVisualToken(tokens[0], "A")}
+              ${rintVisualToken(tokens[1], "B")}
+              ${rintVisualToken(tokens[2], "C")}
+              <div class="rint-binary-claim">
+                <strong>${escapeHtml(status)}</strong>
+                <span>${escapeHtml(claim.trim() || premise.trim())}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function rintRailHtml() {
+        if (!rint.sequence.length) {
+          return `<div class="rint-rail-card"><strong>history empty</strong><span>start stream</span></div>`;
+        }
+        const currentIndex = rint.sequence.length - 1;
+        const targetIndex = currentIndex - rint.n;
+        const visibleCount = Math.max(7, rint.n + 3);
+        const start = Math.max(0, rint.sequence.length - visibleCount);
+        return rint.sequence.slice(start).map((entry, offset) => {
+          const index = start + offset;
+          const classes = [
+            "rint-rail-card",
+            index === currentIndex ? "is-current" : "",
+            index === targetIndex ? "is-target" : ""
+          ].filter(Boolean).join(" ");
+          const label = index === currentIndex ? "current" : index === targetIndex ? `${rint.n}-back target` : `${currentIndex - index} back`;
+          return `
+            <div class="${classes}">
+              <strong>T${entry.trialNumber || index + 1} ${escapeHtml(label)}</strong>
+              <span>${escapeHtml(rintModeLabel(entry.taskMode))}</span>
+              <span>${escapeHtml(rintStateLabel(entry, entry.taskMode))}</span>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderRintVisual() {
+        if (!$("#rintVisual")) return;
+        const item = rint.current;
+        const backItem = item?.backItem || null;
+        const backMode = item?.compareItem ? item.taskMode : (backItem?.taskMode || item?.taskMode || "rint");
+        const answerState = item && rint.locked
+          ? `correct: ${item.shouldMatch ? "Match" : "No match"}`
+          : "choose Match only when the two drawn states are equal";
+        $("#rintCurrentLabel").textContent = item ? `T${item.trialNumber || rint.trial} / ${rintModeLabel(item.taskMode)}` : "idle";
+        $("#rintBackLabel").textContent = item && backItem ? `T${backItem.trialNumber || "?"} / ${rint.n}-back` : `${rint.n}-back waiting`;
+        $("#rintCurrentDiagram").innerHTML = rintDiagramHtml(item, item?.taskMode);
+        $("#rintBackDiagram").innerHTML = rintDiagramHtml(backItem, backMode);
+        $("#rintCurrentCaption").textContent = item
+          ? `${rintModeLabel(item.taskMode)}: ${item.currentState}`
+          : "Start the stream to draw a relation.";
+        $("#rintBackCaption").textContent = item
+          ? (backItem ? `${item.backSummary}${item.compareItem ? "" : ". This switch cannot match the current rule."}` : `Need ${rint.n} earlier trials before a target exists.`)
+          : "The target trial appears here once enough cards exist.";
+        $("#rintCompareReadout").innerHTML = `
+          <span>rule</span><strong>${escapeHtml(rintModeLabel(item?.taskMode || "rint"))}</strong>
+          <span>offset</span><strong>${item ? `T${item.trialNumber || rint.trial} vs ${backItem ? `T${backItem.trialNumber || "?"}` : `${rint.n}-back warmup`}` : "--"}</strong>
+          <span>answer</span><strong>${escapeHtml(answerState)}</strong>
+        `;
+        $("#rintRail").innerHTML = rintRailHtml();
+      }
+
+      function answerRint(userMatch, button) {
+        if (!rint.active || rint.locked || !rint.current) return;
+        stopAnswerTimer("rint");
+        rint.locked = true;
+        const correct = scoreRintAnswer(Boolean(userMatch));
+        playSfx(correct ? "correct" : "wrong", { origin: elementCenter(button) });
+        updateRintAnswerButtons(Boolean(userMatch), correct);
+        if (button) animateAnswerFeedback(button, correct);
+        $("#rintFeedback").textContent = correct
+          ? `Confirmed. ${rint.current.explanation}`
+          : `Mismatch. Correct response: ${rint.current.shouldMatch ? "Match" : "No match"}. ${rint.current.explanation}`;
+        $("#nextRint").textContent = rint.trial >= rint.total ? "Finish stream" : "Next";
+        renderRintVisual();
+        renderRintStats();
+      }
+
+      function scoreRintAnswer(userMatch, missed = false) {
+        const item = rint.current;
+        const correct = !missed && userMatch === Boolean(item.shouldMatch);
+        if (correct) rint.correct += 1;
+        if (missed) rint.missedResponses += 1;
+        if (item.shouldMatch && userMatch && !missed) rint.hits += 1;
+        if (item.shouldMatch && (!userMatch || missed)) rint.misses += 1;
+        if (!item.shouldMatch && userMatch && !missed) rint.falseAlarms += 1;
+        if (!item.shouldMatch && !userMatch && !missed) rint.correctRejects += 1;
+        const category = item.category || "mixed";
+        rint.categoryStats[category] = rint.categoryStats[category] || { correct: 0, total: 0 };
+        rint.categoryStats[category].total += 1;
+        if (correct) rint.categoryStats[category].correct += 1;
+        return correct;
+      }
+
+      function timeoutRintTrial() {
+        if (!rint.active || rint.locked || !rint.current) return;
+        rint.locked = true;
+        playSfx("wrong");
+        scoreRintAnswer(false, true);
+        updateRintAnswerButtons(null, false);
+        $("#rintFeedback").textContent = `Time. Correct response: ${rint.current.shouldMatch ? "Match" : "No match"}. ${rint.current.explanation}`;
+        $("#nextRint").textContent = rint.trial >= rint.total ? "Finish stream" : "Next";
+        renderRintVisual();
+        renderRintStats();
+      }
+
+      function updateRintAnswerButtons(userMatch, correct) {
+        $$("#rintAnswerGrid .answer-btn").forEach((item) => {
+          const isMatch = item.dataset.rintAnswer === "true";
+          item.disabled = true;
+          item.classList.toggle("is-correct", isMatch === Boolean(rint.current.shouldMatch));
+          item.classList.toggle("is-wrong", userMatch !== null && isMatch === userMatch && !correct);
+        });
+      }
+
+      function renderRintTrial() {
+        if (!$("#rintText") || !rint.current) return;
+        const item = rint.current;
+        $("#rintText").textContent = item.premise;
+        $("#rintType").textContent = `${item.taskMode.toUpperCase()} / ${item.category.replace("binary-", "")}`;
+        $("#rintStagePill").textContent = item.isDistractor ? "near miss" : rint.stage;
+        $("#rintN").textContent = `${rint.n}-back`;
+        $("#rintProgress").textContent = `${rint.trial}/${rint.total}`;
+        $$("#rintAnswerGrid .answer-btn").forEach((button) => {
+          button.disabled = false;
+          button.classList.remove("is-correct", "is-wrong");
+        });
+        renderRintVisual();
+      }
+
+      function finishRintStream(stopped = false) {
+        stopAnswerTimer("rint");
+        if (!rint.active && !rint.trial) return;
+        const answered = Math.max(1, rint.trial);
+        const success = rint.correct / answered;
+        const sensitivity = rintSensitivity();
+        const xp = rint.correct * 34 + Math.round(success * 120) + Math.round(Math.max(0, sensitivity) * 60) + rint.n * 10;
+        rint.active = false;
+        rint.locked = true;
+        updateTrainingState();
+        if ($("#rintFeedback")) {
+          $("#rintFeedback").textContent = `${stopped ? "Stopped" : "Stream complete"}: ${rint.correct}/${answered}, ${Math.round(success * 100)}%, ${rintStageBrief(rint.stage)}`;
+        }
+        recordSession("rint", {
+          success,
+          xp,
+          label: `${rint.stage} ${rint.n}-back, hit ${Math.round(rintHitRate() * 100)}%, FA ${Math.round(rintFalseAlarmRate() * 100)}%`
+        });
+      }
+
+      function rintHitRate() {
+        const signal = rint.hits + rint.misses;
+        return signal ? rint.hits / signal : 0;
+      }
+
+      function rintFalseAlarmRate() {
+        const noise = rint.falseAlarms + rint.correctRejects;
+        return noise ? rint.falseAlarms / noise : 0;
+      }
+
+      function rintSensitivity() {
+        return clamp(rintHitRate() - rintFalseAlarmRate(), -1, 1);
+      }
+
+      function renderRintStats() {
+        if (!$("#rintDifficulty")) return;
+        const config = rintConfig();
+        const accuracy = rint.trial ? rint.correct / rint.trial : 0;
+        $("#rintDifficulty").textContent = `difficulty ${moduleDifficulty("rint")}`;
+        $("#rintProgress").textContent = `${rint.trial}/${rint.active ? rint.total : config.total}`;
+        $("#rintStagePill").textContent = config.stage;
+        $("#rintN").textContent = `${rint.active ? rint.n : config.nMin}-${config.nMax} n`;
+        $("#rintDifficultySide").textContent = moduleDifficulty("rint");
+        $("#rintStageSide").textContent = config.stage;
+        $("#rintCurrentN").textContent = rint.active ? rint.n : `${config.nMin}-${config.nMax}`;
+        $("#rintTarget").textContent = rint.active ? rint.total : config.total;
+        $("#rintCorrect").textContent = rint.correct;
+        $("#rintAccuracy").textContent = `${Math.round(accuracy * 100)}%`;
+        $("#rintHits").textContent = `${Math.round(rintHitRate() * 100)}%`;
+        $("#rintFalseAlarms").textContent = `${Math.round(rintFalseAlarmRate() * 100)}%`;
+        $("#rintMisses").textContent = rint.missedResponses;
+        $("#rintCategory").textContent = bestRintCategory();
+        $("#rintSensitivity").textContent = `${Math.round(rintSensitivity() * 100)}%`;
+        $("#rintReadiness").textContent = rintReadinessLabel();
+        $("#rintStageSelect").value = config.stage;
+        $("#rintNMinSelect").value = String(config.nMin);
+        $("#rintNMaxSelect").value = String(config.nMax);
+        $("#rintRelationSelect").value = state.modules.rint.relationSet || "all";
+        $("#rintTokenSelect").value = state.modules.rint.tokenMode || "mixed";
+        $("#rintSwitchSelect").value = state.modules.rint.switchMode || "rint";
+        $("#rintDistractorToggle").checked = config.distractors;
+        renderRintVisual();
+      }
+
+      function bestRintCategory() {
+        const entries = Object.entries(rint.categoryStats || {});
+        if (!entries.length) return "none";
+        const best = entries.sort((a, b) => (b[1].correct / Math.max(1, b[1].total)) - (a[1].correct / Math.max(1, a[1].total)))[0];
+        return `${best[0].replace("binary-", "")} ${Math.round(best[1].correct / Math.max(1, best[1].total) * 100)}%`;
+      }
+
+      function rintReadinessLabel() {
+        const recent = state.modules.rint.recent || [];
+        const two = recent.slice(-2);
+        if (state.modules.rint.stage === "calibration" && two.length >= 2 && two.every((value) => value >= 0.8)) return "ready for load";
+        if (state.modules.rint.stage === "load" && rint.n >= 3 && rintHitRate() >= 0.7) return "ready for mixed";
+        if (state.modules.rint.stage === "mixed") return rintSensitivity() >= 0.35 ? "stable mixed" : "keep mixed";
+        return `stage rec: ${rintRecommendedStage()}`;
+      }
+
+      function rintStageBrief(stage) {
+        if (stage === "calibration") return "Stage 1: sessions 1-5, single-mode RINT, fixed N=2, distractors off.";
+        if (stage === "load") return "Stage 2: sessions 6-20, adaptive N=2-4 with distractors.";
+        return "Stage 3: Mixed RINT with Normal, Type, RINT, and binary switching.";
+      }
+
+      function rintProtocolLines() {
+        return [
+          "Stage 1, sessions 1-5: single-mode RINT, N=2, rotating relation categories, mixed tokens, distractors off.",
+          "Stage 2, sessions 6-20: adaptive RINT, N=2-4, all relation types, distractors and near misses on.",
+          "Stage 3, sessions 21+: Mixed RINT with Normal, Type, RINT, and binary-logic switching; heterogeneous tokens and full relation set.",
+          "Plateau driver: use binary logic or mixed switching when plain RINT stalls, then return to RINT after stable accuracy.",
+          "Caveat: n-back and relational-training transfer is contested. This app tracks task gains and near-transfer signals, not guaranteed IQ gains."
+        ];
+      }
+
+      function saveRintSettings() {
+        const module = state.modules.rint;
+        module.stage = $("#rintStageSelect").value;
+        module.nMin = Number($("#rintNMinSelect").value);
+        module.nMax = Number($("#rintNMaxSelect").value);
+        module.relationSet = $("#rintRelationSelect").value;
+        module.tokenMode = $("#rintTokenSelect").value;
+        module.switchMode = $("#rintSwitchSelect").value;
+        module.distractors = $("#rintDistractorToggle").checked;
+        state.modules.rint = sanitizeModule("rint", module);
+        saveState();
+        renderRintStats();
+        showToast("RINT controls saved");
+      }
+
+      function setRintStage(stage) {
+        const value = String(stage || "").toLowerCase();
+        if (!["calibration", "load", "mixed"].includes(value)) return false;
+        state.modules.rint.stage = value;
+        if (value === "calibration") {
+          state.modules.rint.nMin = 2;
+          state.modules.rint.nMax = 2;
+          state.modules.rint.distractors = false;
+          state.modules.rint.switchMode = "rint";
+        } else if (value === "load") {
+          state.modules.rint.nMin = Math.max(2, state.modules.rint.nMin || 2);
+          state.modules.rint.nMax = Math.max(3, state.modules.rint.nMax || 4);
+          state.modules.rint.distractors = true;
+        } else {
+          state.modules.rint.nMin = Math.max(2, state.modules.rint.nMin || 2);
+          state.modules.rint.nMax = 4;
+          state.modules.rint.distractors = true;
+          state.modules.rint.switchMode = state.modules.rint.switchMode === "rint" ? "mixed" : state.modules.rint.switchMode;
+          state.modules.rint.tokenMode = "mixed";
+          state.modules.rint.relationSet = "all";
+        }
+        state.modules.rint = sanitizeModule("rint", state.modules.rint);
+        saveState();
+        renderRintStats();
+        return true;
+      }
+
+      function setRintN(min, max = min) {
+        const low = Math.round(finiteNumber(min, NaN, 2, 4));
+        const high = Math.round(finiteNumber(max, low, low, 4));
+        if (!Number.isFinite(low) || !Number.isFinite(high)) return false;
+        state.modules.rint.nMin = low;
+        state.modules.rint.nMax = high;
+        if (low !== 2 || high !== 2) state.modules.rint.stage = state.modules.rint.stage === "calibration" ? "load" : state.modules.rint.stage;
+        state.modules.rint = sanitizeModule("rint", state.modules.rint);
+        saveState();
+        renderRintStats();
+        return true;
+      }
+
+      function setRintRelations(value) {
+        const token = String(value || "").toLowerCase();
+        const aliases = { quantitative: "quant", verbal: "verbal", "verbal-semantic": "semantic", "verbal-comparison": "comparison" };
+        const relationSet = aliases[token] || token;
+        if (!["all", "spatial", "trait", "quant", "verbal", "semantic", "comparison", "temporal", "directional"].includes(relationSet)) return false;
+        state.modules.rint.relationSet = relationSet;
+        state.modules.rint = sanitizeModule("rint", state.modules.rint);
+        saveState();
+        renderRintStats();
+        return true;
+      }
+
+      function setRintDistractors(value) {
+        const token = String(value || "").toLowerCase();
+        if (!["on", "true", "yes", "1", "off", "false", "no", "0"].includes(token)) return false;
+        state.modules.rint.distractors = ["on", "true", "yes", "1"].includes(token);
+        if (state.modules.rint.distractors && state.modules.rint.stage === "calibration") state.modules.rint.stage = "load";
+        state.modules.rint = sanitizeModule("rint", state.modules.rint);
+        saveState();
+        renderRintStats();
+        return true;
+      }
+
+      function setRintSwitchMode(value) {
+        const token = String(value || "").toLowerCase();
+        if (!["normal", "type", "rint", "mixed", "binary"].includes(token)) return false;
+        state.modules.rint.switchMode = token;
+        if (token !== "rint" && state.modules.rint.stage === "calibration") state.modules.rint.stage = "mixed";
+        state.modules.rint = sanitizeModule("rint", state.modules.rint);
+        saveState();
+        renderRintStats();
+        return true;
+      }
+
+      function rrtConfig() {
+        const d = moduleDifficulty("rrt");
+        const protocol = state.modules.rrt.protocol || "eight-week";
+        const protocolBonus = { maintenance: -1, "eight-week": 0, assessment: 2 }[protocol] || 0;
+        const protocolLoad = { maintenance: 0.8, "eight-week": 1, assessment: 1.18 }[protocol] || 1;
+        return {
+          protocol,
+          target: Math.round((5 + Math.ceil(d / 2) + problemDepth() + protocolBonus) * sessionLoadMultiplier() * protocolLoad),
+          relationLoad: clamp(Math.ceil(d / 3) + problemDepth() + Math.max(0, protocolBonus), 2, 9)
+        };
+      }
+
+      function rrtGenerators() {
+        return {
+          frames: [makeRelationalFrameQuestion, makeMoreLessQuestion, makeBeforeAfterQuestion],
+          transitive: [makeTransitiveRrtQuestion, makeHierarchicalRrtQuestion],
+          analogy: [makeRrtAnalogyQuestion, makeCrossMappingQuestion, makeDistantAnalogyQuestion],
+          matrix: [makeRrtMatrixQuestion, makeProportionRrtQuestion],
+          logic: [makeConditionalRrtQuestion, makeNegatedRelationQuestion, makeTruthTableRrtQuestion],
+          evidence: [makeRelationalFrameQuestion, makeMoreLessQuestion, makeBeforeAfterQuestion, makeTransitiveRrtQuestion, makeHierarchicalRrtQuestion, makeRrtAnalogyQuestion, makeCrossMappingQuestion, makeDistantAnalogyQuestion, makeRrtMatrixQuestion, makeProportionRrtQuestion, makeConditionalRrtQuestion, makeNegatedRelationQuestion, makeTruthTableRrtQuestion]
+        };
+      }
+
+      function generateRrtProblem() {
+        const mode = state.modules.rrt.mode || "evidence";
+        const generators = rrtGenerators();
+        rrt.current = sample(generators[mode] || generators.evidence)(moduleDifficulty("rrt") + problemDepth());
+      }
+
+      function makeMoreLessQuestion(d) {
+        const names = shuffle(["KAV", "MIR", "DAX", "LUM", "SEN", "TOR"]).slice(0, 4);
+        const values = shuffle([2 + d, 5 + d * 2, 8 + d * 2, 11 + d * 3]);
+        const items = names.map((name, index) => ({ name, value: values[index] })).sort((a, b) => b.value - a.value);
+        const premises = [
+          `${items[0].name} is more than ${items[1].name}`,
+          `${items[1].name} is more than ${items[2].name}`,
+          `${items[2].name} is more than ${items[3].name}`
+        ];
+        return {
+          type: "same-more-less frame",
+          text: `Integrate the relations, not the word shapes. Premises: ${premises.join("; ")}. Which item is least?`,
+          answer: items[3].name,
+          options: shuffle(names),
+          explanation: `The chain is ${items.map((item) => item.name).join(" > ")}, so ${items[3].name} is least.`
+        };
+      }
+
+      function makeBeforeAfterQuestion(d) {
+        const steps = shuffle(["prime", "encode", "map", "integrate", "answer", "check"]).slice(0, clamp(4 + Math.floor(d / 4), 4, 6));
+        const target = steps[clamp(2 + Math.floor(d / 5), 2, steps.length - 1)];
+        const before = steps[steps.indexOf(target) - 1];
+        const after = steps[steps.indexOf(target) + 1] || steps[steps.length - 1];
+        return {
+          type: "before-after integration",
+          text: `Sequence premises: ${steps.map((step, index) => `${index + 1}. ${step}`).join("; ")}. What is immediately before ${target}, and what is immediately after it?`,
+          answer: `${before} / ${after}`,
+          options: shuffle([
+            `${before} / ${after}`,
+            `${after} / ${before}`,
+            `${steps[0]} / ${target}`,
+            `${target} / ${steps[steps.length - 1]}`
+          ]),
+          explanation: `${target} sits between ${before} and ${after}; this trains ordered relational integration.`
+        };
+      }
+
+      function makeRelationalFrameQuestion(d) {
+        const frames = [
+          { relation: "same", cue: "same as", transform: (x) => x, label: "same" },
+          { relation: "opposite", cue: "opposite of", transform: (x) => -x, label: "opposite" },
+          { relation: "more", cue: "more than", transform: (x) => x + 1, label: "more" },
+          { relation: "less", cue: "less than", transform: (x) => x - 1, label: "less" }
+        ];
+        const first = sample(frames);
+        const second = sample(frames);
+        const base = Math.max(3, d + 2);
+        const value = second.transform(first.transform(base));
+        const answer = value > base ? "more" : value < base ? "less" : "same";
+        return {
+          type: "derived relation frame",
+          text: `Let A start at ${base}. B is ${first.cue} A. C is ${second.cue} B. Relative to A, C is...`,
+          answer,
+          options: shuffle(["more", "less", "same", "cannot tell"]),
+          explanation: `Apply the trained frames in order: ${first.label}, then ${second.label}. The resulting C value is ${value}, so C is ${answer} relative to A.`
+        };
+      }
+
+      function makeTransitiveRrtQuestion(d) {
+        const names = shuffle(["Ari", "Bo", "Cy", "Dee", "Eli", "Fay"]).slice(0, clamp(4 + Math.floor(d / 4), 4, 6));
+        const ordered = names.map((name, index) => ({ name, value: names.length - index }));
+        const premises = ordered.slice(0, -1).map((item, index) => `${item.name} is heavier than ${ordered[index + 1].name}`);
+        const left = ordered[0];
+        const right = ordered[ordered.length - 1];
+        return {
+          type: "transitive inference",
+          text: `Only use the premises. ${premises.join("; ")}. What follows about ${left.name} and ${right.name}?`,
+          answer: `${left.name} heavier`,
+          options: shuffle([`${left.name} heavier`, `${right.name} heavier`, "equal weight", "cannot infer"]),
+          explanation: `The full chain places ${left.name} above ${right.name}. This is direct relational integration across ${premises.length} links.`
+        };
+      }
+
+      function makeHierarchicalRrtQuestion(d) {
+        const categories = shuffle([
+          ["all glims are sensors", "all sensors are instruments", "some instruments are portable", "glims are instruments"],
+          ["all nals are patterns", "all patterns are relations", "no relations are random", "nals are not random"],
+          ["all torps are maps", "all maps are models", "all models simplify", "torps simplify"]
+        ])[0];
+        const lure = d >= 6 ? "some portable things are glims" : "all instruments are glims";
+        return {
+          type: "class inclusion",
+          text: `Premises: ${categories[0]}; ${categories[1]}; ${categories[2]}. Which conclusion is guaranteed?`,
+          answer: categories[3],
+          options: shuffle([categories[3], lure, "no conclusion follows", categories[0].replace("all", "no")]),
+          explanation: `Follow the inclusion chain and reject the surface lure. The guaranteed relation is: ${categories[3]}.`
+        };
+      }
+
+      function makeRrtAnalogyQuestion() {
+        const item = sample([
+          { stem: "thermostat : temperature", answer: "governor : speed", relation: "controller regulates variable", options: ["governor : speed", "clock : wall", "glass : window", "river : stone"] },
+          { stem: "seed : tree", answer: "prototype : product", relation: "early form develops into mature form", options: ["prototype : product", "book : shelf", "signal : noise", "mirror : face"] },
+          { stem: "cipher : message", answer: "equation : quantity", relation: "structure encodes hidden content", options: ["equation : quantity", "pencil : paper", "ladder : roof", "cloud : rain"] },
+          { stem: "map : territory", answer: "model : system", relation: "representation corresponds to represented thing", options: ["model : system", "engine : fuel", "note : song", "door : room"] }
+        ]);
+        return {
+          type: "propositional analogy",
+          text: `${item.stem} has the relation "${item.relation}". Which pair preserves that relation?`,
+          answer: item.answer,
+          options: shuffle(item.options),
+          explanation: `The correct pair preserves the same abstract role relation: ${item.relation}.`
+        };
+      }
+
+      function makeCrossMappingQuestion() {
+        const patterns = [
+          { pattern: "small-big-small", answer: "quiet-loud-quiet", lure: "small-small-big" },
+          { pattern: "A-B-B-A", answer: "cold-warm-warm-cold", lure: "cold-warm-cold-warm" },
+          { pattern: "low-high-mid-high", answer: "red-blue-green-blue", lure: "red-green-blue-red" }
+        ];
+        const item = sample(patterns);
+        return {
+          type: "cross-mapped pattern",
+          text: `Ignore surface words and match the relation pattern. Target pattern: ${item.pattern}. Which option has the same structure?`,
+          answer: item.answer,
+          options: shuffle([item.answer, item.lure, "near-far-near-far", "one-two-three-four"]),
+          explanation: `The answer preserves the abstract same/different positions, not the literal words.`
+        };
+      }
+
+      function makeDistantAnalogyQuestion() {
+        const item = sample([
+          { source: "immune memory tags a threat so a later response is faster", target: "study system", answer: "retrieval cues tag a concept so recall is faster later" },
+          { source: "mission control uses telemetry to update a launch decision", target: "learning plan", answer: "feedback updates the next training difficulty" },
+          { source: "a city reroutes traffic around a bottleneck", target: "problem solving", answer: "switch strategy when one constraint blocks progress" }
+        ]);
+        return {
+          type: "distant analogy integration",
+          text: `Source relation: ${item.source}. Which target mapping best preserves the structure for a ${item.target}?`,
+          answer: item.answer,
+          options: shuffle([item.answer, "make the target look visually similar", "repeat the same words from the source", "ignore constraints and maximize speed"]),
+          explanation: `Distant analogy practice is useful when the mapped relation is structural, not just thematically similar.`
+        };
+      }
+
+      function makeRrtMatrixQuestion(d) {
+        const start = Math.floor(Math.random() * 5) + 2;
+        const rowAdd = Math.ceil(d / 3) + 1;
+        const colAdd = Math.ceil(d / 4) + 2;
+        const a = start;
+        const b = a + rowAdd;
+        const c = a + colAdd;
+        const answer = c + rowAdd;
+        return {
+          type: "matrix rule induction",
+          text: `Complete the 2x2 rule matrix. Row relation adds ${rowAdd}; column relation adds ${colAdd}. Top row: ${a}, ${b}. Bottom left: ${c}. Bottom right: ?`,
+          answer: String(answer),
+          options: numberOptions(answer, 8 + d * 2),
+          explanation: `Apply either relation path: ${a}+${colAdd}=${c}, then +${rowAdd}=${answer}; or ${a}+${rowAdd}=${b}, then +${colAdd}=${answer}.`
+        };
+      }
+
+      function makeProportionRrtQuestion(d) {
+        const a = Math.floor(Math.random() * 5) + 2;
+        const ratio = Math.floor(Math.random() * 3) + Math.ceil(d / 4) + 2;
+        const c = a + Math.floor(Math.random() * 4) + 2;
+        const answer = c * ratio;
+        return {
+          type: "proportional relation",
+          text: `A relates to B by x${ratio}. If A=${a}, B=${a * ratio}, and C=${c}, what D preserves the same C:D relation?`,
+          answer: String(answer),
+          options: numberOptions(answer, 10 + d * 3),
+          explanation: `Preserve the relation, not the numbers: C x ${ratio} = ${answer}.`
+        };
+      }
+
+      function makeConditionalRrtQuestion(d) {
+        const relation = sample([
+          { rule: "If a shape is striped, it must be heavy", test: "striped", property: "heavy" },
+          { rule: "If a signal is delayed, it must be rerouted", test: "delayed", property: "rerouted" },
+          { rule: "If a token is mirrored, it must be checked twice", test: "mirrored", property: "checked twice" }
+        ]);
+        const item = sample(["KAV", "MIR", "DAX", "LUM"]);
+        const negated = d >= 6 && Math.random() < 0.45;
+        return {
+          type: "conditional relation",
+          text: `${relation.rule}. ${item} is ${negated ? "not " : ""}${relation.test}. What is guaranteed?`,
+          answer: negated ? "nothing guaranteed" : `${item} is ${relation.property}`,
+          options: shuffle([
+            `${item} is ${relation.property}`,
+            `${item} is not ${relation.property}`,
+            "nothing guaranteed",
+            "the rule is contradicted"
+          ]),
+          explanation: negated
+            ? `Denying the condition does not prove the opposite. This trains conditional relation control.`
+            : `The condition is met, so the consequent is guaranteed: ${item} is ${relation.property}.`
+        };
+      }
+
+      function makeNegatedRelationQuestion() {
+        const items = shuffle(["A", "B", "C", "D"]);
+        const top = items[0];
+        const bottom = items[items.length - 1];
+        return {
+          type: "negated relation",
+          text: `Premises: ${top} is not less than ${items[1]}; ${items[1]} is greater than ${items[2]}; ${items[2]} is greater than ${bottom}. Which conclusion is strongest?`,
+          answer: `${top} is not least`,
+          options: shuffle([`${top} is not least`, `${bottom} is greatest`, `${items[1]} is least`, "all items are equal"]),
+          explanation: `The negated first premise blocks a simple total order, but the chain still makes ${top} not least.`
+        };
+      }
+
+      function makeTruthTableRrtQuestion() {
+        const a = Math.random() > 0.5;
+        const b = Math.random() > 0.5;
+        const relation = sample(["and", "or", "xor"]);
+        const value = relation === "and" ? a && b : relation === "or" ? a || b : a !== b;
+        return {
+          type: "truth relation",
+          text: `Let A=${a ? "true" : "false"} and B=${b ? "true" : "false"}. Which value satisfies A ${relation.toUpperCase()} B?`,
+          answer: value ? "true" : "false",
+          options: shuffle(["true", "false", "cannot tell", "both true and false"]),
+          explanation: `${relation.toUpperCase()} is a relation over truth states; here it evaluates to ${value ? "true" : "false"}.`
+        };
+      }
+
+      function startRrtSet() {
+        playSfx("start");
+        rrt.active = true;
+        rrt.answered = 0;
+        rrt.correct = 0;
+        rrt.target = rrtConfig().target;
+        rrt.current = null;
+        rrt.locked = false;
+        rrt.mode = state.modules.rrt.mode || "evidence";
+        rrt.startTime = performance.now();
+        $("#rrtFeedback").textContent = "RRT block running. Solve by naming the relation, integrating links, or preserving structure across examples.";
+        updateTrainingState();
+        nextRrtProblem();
+      }
+
+      function nextRrtProblem() {
+        if (!rrt.active) {
+          startRrtSet();
+          return;
+        }
+        if (rrt.current && !rrt.locked) {
+          $("#rrtFeedback").textContent = "Answer the current relational item before moving on.";
+          playSfx("wrong");
+          return;
+        }
+        if (rrt.locked && rrt.answered >= rrt.target) {
+          finishRrtSet();
+          return;
+        }
+        rrt.locked = false;
+        generateRrtProblem();
+        $("#rrtText").textContent = rrt.current.text;
+        $("#rrtType").textContent = rrt.current.type;
+        $("#nextRrt").textContent = "Next";
+        renderRrtAnswers();
+        renderRrtStats();
+        startAnswerTimer("rrt", answerTimeLimit("rrt"), timeoutRrt);
+      }
+
+      function renderRrtAnswers() {
+        const grid = $("#rrtAnswerGrid");
+        grid.innerHTML = "";
+        answerOptions(rrt.current).forEach((option) => {
+          const button = document.createElement("button");
+          button.className = "answer-btn";
+          button.type = "button";
+          button.textContent = option;
+          on(button, "click", () => answerRrt(button, option), "answer rrt");
+          grid.appendChild(button);
+        });
+      }
+
+      function answerRrt(button, option) {
+        if (!rrt.active || rrt.locked) return;
+        stopAnswerTimer("rrt");
+        rrt.locked = true;
+        rrt.answered += 1;
+        const correct = option === String(rrt.current.answer);
+        if (correct) rrt.correct += 1;
+        playSfx(correct ? "correct" : "wrong", { origin: elementCenter(button) });
+        $$("#rrtAnswerGrid .answer-btn").forEach((item) => {
+          item.disabled = true;
+          if (item.textContent === String(rrt.current.answer)) item.classList.add("is-correct");
+        });
+        if (!correct) button.classList.add("is-wrong");
+        animateAnswerFeedback(button, correct);
+        $("#rrtFeedback").textContent = correct
+          ? `Correct. ${rrt.current.explanation}`
+          : `Not quite. Correct answer: ${rrt.current.answer}. ${rrt.current.explanation}`;
+        $("#nextRrt").textContent = rrt.answered >= rrt.target ? "Finish block" : "Next";
+        renderRrtStats();
+      }
+
+      function timeoutRrt() {
+        if (!rrt.active || rrt.locked || !rrt.current) return;
+        rrt.locked = true;
+        rrt.answered += 1;
+        playSfx("wrong");
+        revealTimedOutAnswer("#rrtAnswerGrid", rrt.current.answer);
+        $("#rrtFeedback").textContent = `Time. Correct answer: ${rrt.current.answer}. ${rrt.current.explanation}`;
+        $("#nextRrt").textContent = rrt.answered >= rrt.target ? "Finish block" : "Next";
+        renderRrtStats();
+      }
+
+      function finishRrtSet() {
+        stopAnswerTimer("rrt");
+        if (!rrt.active || rrt.answered === 0) return;
+        const success = rrt.correct / rrt.answered;
+        const seconds = Math.max(1, Math.round((performance.now() - rrt.startTime) / 1000));
+        const xp = rrt.correct * 32 + Math.round(success * 130) + moduleDifficulty("rrt") * 9;
+        rrt.active = false;
+        updateTrainingState();
+        $("#rrtFeedback").textContent = `RRT block complete: ${rrt.correct}/${rrt.answered}, ${Math.round(success * 100)}%, ${seconds}s.`;
+        recordSession("rrt", { success, xp, label: `${rrt.correct}/${rrt.answered} RRT relations in ${seconds}s` });
+      }
+
+      function setRrtMode(mode) {
+        state.modules.rrt.mode = ["evidence", "frames", "transitive", "analogy", "matrix", "logic"].includes(mode) ? mode : "evidence";
+        rrt.mode = state.modules.rrt.mode;
+        saveState();
+        renderRrtStats();
+      }
+
+      function setRrtProtocol(protocol) {
+        state.modules.rrt.protocol = ["eight-week", "maintenance", "assessment"].includes(protocol) ? protocol : "eight-week";
+        saveState();
+        renderRrtStats();
+      }
+
+      function renderRrtStats() {
+        if (!$("#rrtDifficulty")) return;
+        const config = rrtConfig();
+        const mode = state.modules.rrt.mode || "evidence";
+        const ported = state.ported.summary.rrt;
+        $("#rrtDifficulty").textContent = `difficulty ${moduleDifficulty("rrt")}`;
+        $("#rrtProgress").textContent = `${rrt.answered}/${rrt.target || config.target}`;
+        $("#rrtLoad").textContent = `${config.relationLoad}-relation load`;
+        $("#rrtDifficultySide").textContent = moduleDifficulty("rrt");
+        $("#rrtTarget").textContent = rrt.target || config.target;
+        $("#rrtCorrect").textContent = rrt.correct;
+        $("#rrtModeLabel").textContent = mode;
+        $("#rrtPortedSignal").textContent = ported ? `${ported.count} rows, ${Math.round(ported.avgScore * 100)}% avg` : "none";
+        $("#rrtModeSelect").value = mode;
+        $("#rrtProtocolSelect").value = config.protocol;
+      }
+
+      function renderProgress() {
+        const history = $("#historyList");
+        history.innerHTML = "";
+        if (!state.history.length) {
+          const empty = document.createElement("li");
+          empty.innerHTML = "<strong>No sessions yet</strong><span>Train in any module to fill this log.</span>";
+          history.appendChild(empty);
+        } else {
+          state.history.forEach((entry) => {
+            const info = moduleInfo[entry.module] || { label: "Unknown module" };
+            const changed = entry.difficulty > entry.previousDifficulty ? "up" : entry.difficulty < entry.previousDifficulty ? "down" : "steady";
+            const item = document.createElement("li");
+            item.innerHTML = `<strong>${escapeHtml(info.label)} - ${entry.success}%</strong><span>${escapeHtml(entry.label)}. +${entry.xp} XP. Difficulty ${changed} to ${entry.difficulty}. ${escapeHtml(entry.time)}</span>`;
+            history.appendChild(item);
+          });
+        }
+
+        const progress = $("#moduleProgressList");
+        progress.innerHTML = "";
+        Object.keys(moduleInfo).forEach((key) => {
+          const module = state.modules[key];
+          const item = document.createElement("li");
+          const ported = state.ported.summary[key];
+          const portedText = ported ? ` Ported: ${ported.count} rows, ${Math.round(ported.avgScore * 100)}% avg.` : "";
+          item.innerHTML = `<strong>${escapeHtml(moduleInfo[key].label)}</strong><span>d${module.difficulty}, effective d${moduleDifficulty(key)}, ${module.xp} XP, ${module.sessions} sessions, best ${module.best}%. ${escapeHtml(module.lastNote)}${escapeHtml(portedText)}</span>`;
+          progress.appendChild(item);
+        });
+
+        const activity = $("#activityLogList");
+        if (activity) {
+          activity.innerHTML = "";
+          const logs = state.eventLog || [];
+          if (!logs.length) {
+            const empty = document.createElement("li");
+            empty.innerHTML = "<strong>No activity yet</strong><span>Sessions, imports, and safety actions will appear here.</span>";
+            activity.appendChild(empty);
+          } else {
+            logs.slice(0, 18).forEach((entry) => {
+              const item = document.createElement("li");
+              item.innerHTML = `<strong>${escapeHtml(entry.kind)} - ${escapeHtml(entry.time)}</strong><span>${escapeHtml(entry.message)}${entry.detail ? `. ${escapeHtml(entry.detail)}` : ""}</span>`;
+              activity.appendChild(item);
+            });
+          }
+        }
+
+        renderPortedSummary();
+      }
+
+      function renderPortedSummary() {
+        const list = $("#portedSummaryList");
+        if (!list) return;
+        list.innerHTML = "";
+        const keys = Object.keys(state.ported.summary || {});
+        if (!keys.length) {
+          const empty = document.createElement("li");
+          empty.innerHTML = "<strong>No imported data</strong><span>Paste CSV or JSON exports in the Terminal Data Port. Imported rows stay local.</span>";
+          list.appendChild(empty);
+          return;
+        }
+        keys.forEach((key) => {
+          const item = state.ported.summary[key];
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${escapeHtml(moduleInfo[key]?.label || key)}</strong><span>${item.count} imported rows, ${Math.round(item.avgScore * 100)}% avg score, suggested d${Math.round(portedSuggestedDifficulty(key) || item.avgDifficulty || 1)} from ${escapeHtml(item.lastSource || "external")}.</span>`;
+          list.appendChild(li);
+        });
+      }
+
+      function progressReportText() {
+        return [
+          "How to get smart 101 progress",
+          `XP: ${state.xp}`,
+          `Level: ${levelFromXp(state.xp)}`,
+          `Streak: ${state.streak}`,
+          `Imported rows: ${state.ported.entries.length}`,
+          ...Object.keys(moduleInfo).map((key) => {
+            const module = state.modules[key];
+            const ported = state.ported.summary[key];
+            return `${moduleInfo[key].label}: d${module.difficulty}, effective d${moduleDifficulty(key)}, ${module.xp} XP, ${module.sessions} sessions, best ${module.best}%${ported ? `, ported ${ported.count} rows avg ${Math.round(ported.avgScore * 100)}%` : ""}`;
+          })
+        ].join("\n");
+      }
+
+      function backupStateText() {
+        return JSON.stringify({
+          app: "How to get smart 101",
+          key: STORAGE_KEY,
+          schemaVersion: 2,
+          exportedAt: new Date().toISOString(),
+          state: sanitizeState(deepMerge(defaultState, state))
+        }, null, 2);
+      }
+
+      function timestampSlug() {
+        return new Date().toISOString().replace(/[:.]/g, "-");
+      }
+
+      function downloadTextFile(filename, text, type = "application/json") {
+        const blob = new Blob([text], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+      }
+
+      function downloadBackupData() {
+        const backup = backupStateText();
+        const box = $("#terminalImportBox");
+        if (box) box.value = backup;
+        downloadTextFile(`smart101-backup-${timestampSlug()}.json`, backup);
+        showToast("Backup downloaded");
+      }
+
+      function portedExportText() {
+        return JSON.stringify({
+          app: "How to get smart 101",
+          key: STORAGE_KEY,
+          schemaVersion: 2,
+          exportedAt: new Date().toISOString(),
+          kind: "ported-training-data",
+          entries: state.ported.entries || [],
+          summary: state.ported.summary || {}
+        }, null, 2);
+      }
+
+      function downloadPortedData() {
+        const text = portedExportText();
+        const box = $("#portedDataBox");
+        if (box && !(box.value || "").trim()) box.value = text;
+        downloadTextFile(`smart101-imports-${timestampSlug()}.json`, text);
+        showToast("Imported-data export downloaded");
+      }
+
+      function readFileAsText(file, maxBytes = 400000) {
+        return new Promise((resolve, reject) => {
+          if (!file) {
+            reject(new Error("No file selected"));
+            return;
+          }
+          if (file.size > maxBytes) {
+            reject(new Error(`File is too large. Limit is ${Math.round(maxBytes / 1000)} KB.`));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onerror = () => reject(reader.error || new Error("File read failed"));
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.readAsText(file);
+        });
+      }
+
+      function importFormatFromFile(file, fallback = "auto") {
+        const name = String(file?.name || "").toLowerCase();
+        if (name.endsWith(".csv")) return "csv";
+        if (name.endsWith(".json")) return "json";
+        return fallback;
+      }
+
+      function copyText(text, successMessage) {
+        if (!navigator.clipboard || !navigator.clipboard.writeText) {
+          showToast("Clipboard API unavailable");
+          return Promise.resolve(false);
+        }
+        return navigator.clipboard.writeText(text).then(
+          () => {
+            showToast(successMessage);
+            return true;
+          },
+          () => {
+            showToast("Clipboard copy blocked");
+            return false;
+          }
+        );
+      }
+
+      function copyProgressReport() {
+        copyText(progressReportText(), "Progress report copied");
+      }
+
+      function copyBackupData() {
+        const backup = backupStateText();
+        const box = $("#terminalImportBox");
+        if (box) box.value = backup;
+        copyText(backup, "Backup JSON copied");
+      }
+
+      function copyPortedData() {
+        copyText(portedExportText(), "Imported-data JSON copied");
+      }
+
+      function importBackupFromText(text) {
+        const raw = String(text || "").trim();
+        if (!raw) {
+          showToast("Paste backup JSON first");
+          return false;
+        }
+        if (raw.length > 600000) {
+          showToast("Backup too large. Keep files under 600 KB.");
+          return false;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          const payload = parsed && parsed.state && typeof parsed.state === "object" ? parsed.state : parsed;
+          state = refreshDailyState(sanitizeState(deepMerge(defaultState, payload)));
+          saveState();
+          renderAll();
+          showToast("Backup imported");
+          return true;
+        } catch (error) {
+          console.warn("Backup import failed", error);
+          showToast("Invalid backup JSON");
+          return false;
+        }
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let current = "";
+        let row = [];
+        let quoted = false;
+        for (let i = 0; i < text.length; i += 1) {
+          const char = text[i];
+          const next = text[i + 1];
+          if (char === "\"" && quoted && next === "\"") {
+            current += "\"";
+            i += 1;
+          } else if (char === "\"") {
+            quoted = !quoted;
+          } else if (char === "," && !quoted) {
+            row.push(current.trim());
+            current = "";
+          } else if ((char === "\n" || char === "\r") && !quoted) {
+            if (char === "\r" && next === "\n") i += 1;
+            row.push(current.trim());
+            if (row.some(Boolean)) rows.push(row);
+            row = [];
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+        row.push(current.trim());
+        if (row.some(Boolean)) rows.push(row);
+        return rows;
+      }
+
+      function rowsFromCsv(text) {
+        const rows = parseCsv(text);
+        if (rows.length < 2) return [];
+        const headers = rows[0].map((header) => header.toLowerCase().replace(/[^a-z0-9]+/g, ""));
+        return rows.slice(1).map((row) => {
+          return headers.reduce((entry, header, index) => {
+            entry[header || `field${index}`] = row[index] || "";
+            return entry;
+          }, {});
+        });
+      }
+
+      function flattenedImportedRows(parsed) {
+        if (Array.isArray(parsed)) return parsed;
+        if (!parsed || typeof parsed !== "object") return [];
+        const candidates = [parsed.sessions, parsed.results, parsed.history, parsed.entries, parsed.records, parsed.data];
+        const array = candidates.find(Array.isArray);
+        if (array) return array;
+        return Object.keys(parsed).map((key) => {
+          const value = parsed[key];
+          return value && typeof value === "object" ? { label: key, ...value } : { label: key, score: value };
+        });
+      }
+
+      function parseScore(value) {
+        if (typeof value === "number") return value > 1 ? clamp(value / 100, 0, 1) : clamp(value, 0, 1);
+        const text = String(value || "").trim();
+        if (!text) return 0;
+        const fraction = text.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
+        if (fraction) return clamp(Number(fraction[1]) / Math.max(1, Number(fraction[2])), 0, 1);
+        const number = Number(text.replace(/%/g, ""));
+        if (!Number.isFinite(number)) return 0;
+        return number > 1 ? clamp(number / 100, 0, 1) : clamp(number, 0, 1);
+      }
+
+      function firstField(row, names) {
+        return names.map((name) => row[name]).find((value) => value !== undefined && value !== null && String(value).trim() !== "");
+      }
+
+      function normalizeImportKey(key) {
+        return String(key || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+      }
+
+      function normalizedImportedRow(row) {
+        if (!row || typeof row !== "object") return {};
+        return Object.keys(row).reduce((clean, key) => {
+          const normalized = normalizeImportKey(key);
+          if (!normalized || ["password", "passcode", "token", "apikey", "secret", "email", "username"].includes(normalized)) return clean;
+          const value = row[key];
+          clean[normalized] = typeof value === "object" && value !== null ? JSON.stringify(value).slice(0, 180) : safeString(String(value ?? ""), "", 220);
+          return clean;
+        }, {});
+      }
+
+      function normalizePortedRow(row, fallbackSource) {
+        row = normalizedImportedRow(row);
+        const source = safeString(firstField(row, ["source", "site", "sitename", "app", "appname", "platform", "platformname"]) || fallbackSource || "external", "external", 80);
+        const label = safeString(firstField(row, ["task", "taskname", "module", "modulename", "game", "gamename", "exercise", "exercisename", "name", "label", "category"]) || source, source, 120);
+        const type = safeString(firstField(row, ["type", "mode", "kind"]) || "import", "import", 50);
+        const module = inferModuleFromText([label, type, source].join(" "));
+        const scoreValue = firstField(row, ["accuracy", "accuracypercent", "score", "scorepercent", "percent", "percentcorrect", "success", "successrate", "correct", "correctcount", "best", "result"]);
+        const totalValue = firstField(row, ["total", "totaltrials", "trials", "trialcount", "attempts", "attemptcount", "questions", "questioncount", "items", "itemcount"]);
+        const difficultyValue = firstField(row, ["difficulty", "difficultysetting", "level", "levelreached", "rank", "n", "nb", "stage"]);
+        const time = safeString(firstField(row, ["date", "time", "timestamp", "createdat", "completedat", "datecompleted", "completedon", "sessiondate"]) || "", "", 80);
+        const parsedScore = totalValue && Number(totalValue) > 0 && Number(scoreValue) <= Number(totalValue)
+          ? clamp(Number(scoreValue) / Number(totalValue), 0, 1)
+          : parseScore(scoreValue);
+        const entry = sanitizePortedEntry({
+          module,
+          source,
+          label,
+          type,
+          time,
+          score: parsedScore,
+          difficulty: finiteNumber(difficultyValue, 0, 0, 10)
+        });
+        return entry && (entry.score || entry.difficulty || entry.label) ? entry : null;
+      }
+
+      function importPortedTrainingData(text, format = "auto", fallbackSource = "external") {
+        const raw = String(text || "").trim();
+        if (!raw) {
+          showToast("Paste JSON or CSV training data first");
+          return false;
+        }
+        if (raw.length > 300000) {
+          showToast("Import too large. Keep exports under 300 KB.");
+          return false;
+        }
+        try {
+          let rows = [];
+          if (format === "csv" || (format === "auto" && !raw.startsWith("{") && !raw.startsWith("["))) {
+            rows = rowsFromCsv(raw);
+          } else {
+            rows = flattenedImportedRows(JSON.parse(raw));
+          }
+          const imported = rows.slice(0, 1000).map((row) => normalizePortedRow(row, fallbackSource)).filter(Boolean);
+          if (!imported.length) {
+            showToast("No usable rows found");
+            return false;
+          }
+          state.ported.entries = [...imported, ...(state.ported.entries || [])].slice(0, 500);
+          state.ported.updatedAt = new Date().toISOString();
+          state.ported = sanitizePortedData(state.ported);
+          logEvent("import", `Imported ${imported.length} external rows`, `${fallbackSource}; ${Object.keys(state.ported.summary).length} linked modules`);
+          saveState();
+          renderAll();
+          showToast(`Imported ${imported.length} rows`);
+          return true;
+        } catch (error) {
+          console.warn("External data import failed", error);
+          showToast("Import failed: check JSON/CSV");
+          return false;
+        }
+      }
+
+      function clearPortedTrainingData() {
+        state.ported = sanitizePortedData({ updatedAt: "", entries: [], summary: {} });
+        logEvent("privacy", "Cleared imported external data", "ported data only");
+        saveState();
+        renderAll();
+        showToast("Imported data cleared");
+      }
+
+      function resetProgressData() {
+        const confirmed = window.confirm("Reset all local training progress for this app?");
+        if (!confirmed) return;
+        localStorage.removeItem(STORAGE_KEY);
+        state = refreshDailyState(clone(defaultState));
+        saveState();
+        renderAll();
+        showToast("Progress reset");
+      }
+
+      function initializeTerminal() {
+        if (terminal.booted) return;
+        terminal.booted = true;
+        terminal.commands = buildTerminalCommands();
+        renderTerminalStatus();
+        terminalWrite("How to get smart 101 terminal online.", "system");
+        terminalWrite("Type help, stats, security, backup, set all 8, cap difficulty 7, train memory, start focus, or boost all 2.", "system");
+        updateTerminalSuggest();
+      }
+
+      function buildTerminalCommands() {
+        const modules = Object.keys(moduleInfo);
+        return [
+          "help",
+          "stats",
+          "program",
+          "modules",
+          "quests",
+          "history",
+          "hard",
+          "normal",
+          "research",
+          "faq",
+          "security",
+          "privacy",
+          "ported",
+          "import data",
+          "clear imports",
+          "export",
+          "backup",
+          "copy backup",
+          "download backup",
+          "copy imports",
+          "export imports",
+          "import backup",
+          "wipe confirm",
+          "sound",
+          "clear",
+          "reset terminal",
+          "terminal compact",
+          "terminal standard",
+          "terminal spacious",
+          "theme geist",
+          "theme classic",
+          "theme matrix",
+          "theme neon",
+          "theme contrast",
+          "color identity",
+          "color hue 42",
+          "color code #c8a958",
+          "color hash brain.exe",
+          "vfx off",
+          "vfx low",
+          "vfx arcade",
+          "vfx max",
+          "preset brutal",
+          "preset balanced",
+          "preset calm",
+          "set all 7",
+          "cap difficulty 8",
+          "normalize difficulties",
+          "randomize difficulties",
+          "set volume 35",
+          "set density compact",
+          "set depth extreme",
+          "set load heavy",
+          "set cap 10",
+          "set timer 1.25",
+          "set trials 1.25",
+          "set lure high",
+          "set hue 210",
+          "set code #9bb4c8",
+          "set hash field-notes",
+          "set adaptive on",
+          "set ported on",
+          "set gui simple",
+          "set gui regular",
+          "set gui complex",
+          "set sfx on",
+          "set cursor on",
+          "set motion full",
+          "nback quad",
+          "nback stimuli",
+          "quad nback",
+          "stimulation nback",
+          "memory mode quad",
+          "memory mode stimuli",
+          "memory pace pressure",
+          "memory lure high",
+          "memory interference on",
+          "rint protocol",
+          "rint stage calibration",
+          "rint stage load",
+          "rint stage mixed",
+          "rint n 2 4",
+          "rint relations all",
+          "rint relations quant",
+          "rint relations verbal",
+          "rint relations temporal",
+          "rint distractors on",
+          "rint switch mixed",
+          "rint switch binary",
+          "rrt mode logic",
+          "rrt mode matrix",
+          "rrt protocol assessment",
+          "rrt protocol eight-week",
+          "challenge systems",
+          "daily plan",
+          "rrt plan",
+          "sources",
+          "doctor",
+          "boost all 1",
+          "boost all 2",
+          "lower all 1",
+          ...modules.map((key) => `train ${key}`),
+          ...modules.map((key) => `start ${key}`),
+          ...modules.map((key) => `set ${key} 5`),
+          ...modules.map((key) => `info ${key}`)
+        ];
+      }
+
+      function renderTerminalStatus() {
+        if (!$("#terminalProgram")) return;
+        const progress = progressionSnapshot();
+        $("#terminalProgram").textContent = state.settings.hardMode ? "hard" : "normal";
+        $("#terminalDepth").textContent = ["", "focused", "deep", "extreme"][state.settings.problemDepth] || "deep";
+        $("#terminalLoad").textContent = ["short", "standard", "heavy"][state.settings.sessionLoad] || "standard";
+        $("#terminalRank").textContent = progress.rank;
+        const prompt = $("#terminalPrompt");
+        if (prompt) prompt.textContent = `smart101:l${levelFromXp(state.xp)}>`;
+      }
+
+      function terminalWrite(message, kind = "") {
+        const output = $("#terminalOutput");
+        if (!output) return;
+        const line = document.createElement("div");
+        line.className = `terminal-line${kind ? ` is-${kind}` : ""}`;
+        line.textContent = message;
+        output.appendChild(line);
+        while (output.children.length > 260) output.removeChild(output.firstElementChild);
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function terminalWriteBlock(title, rows, kind = "system") {
+        terminalWrite(title, kind);
+        rows.forEach((row) => terminalWrite(`  ${row}`));
+      }
+
+      function terminalHelp() {
+        terminalWriteBlock("Core commands", [
+          "stats - XP, level, mastery, rank, and all module difficulties",
+          "program - hard mode, problem depth, session load, adaptive status",
+          "quests - today's module checklist",
+          "modules - compact module table",
+          "info <module> - details for one module"
+        ]);
+        terminalWriteBlock("Control commands", [
+          "train <module> - open a module",
+          "start <module> - open and start a supported drill",
+          "set <module> <1-10> - set stored difficulty",
+          "set volume 35 / set depth extreme / set load heavy",
+          "set cap 10 / set timer 1.25 / set trials 1.5 / set lure high",
+          "set gui simple|regular|complex - change interface complexity",
+          "terminal compact|standard|spacious - density shortcut",
+          "theme geist|classic|matrix|neon|contrast, vfx off|low|arcade|max",
+          "color identity | color hue 210 | color code #c8a958 | color hash field-notes",
+          "preset brutal|balanced|calm",
+          "nback quad / nback stimuli - switch Memory Lab modes instantly",
+          "memory pace measured|fast|pressure, memory lure low|standard|high, memory interference on|off",
+          "rint stage calibration|load|mixed, rint n 2 4, rint relations all|spatial|trait|quant|verbal|temporal|directional",
+          "rint distractors on|off, rint switch normal|type|rint|mixed|binary, rint protocol",
+          "rrt mode evidence|frames|transitive|analogy|matrix|logic, rrt protocol eight-week|maintenance|assessment",
+          "challenge systems - launch a d10 brutal challenge",
+          "daily plan, rrt plan, sources, doctor",
+          "set all <1-10>, cap difficulty <1-10>, normalize difficulties",
+          "randomize difficulties - scramble module levels for a fresh block",
+          "boost all <1-3> - raise every module",
+          "lower all <1-3> - lower every module",
+          "hard / normal - switch training program"
+        ]);
+        terminalWriteBlock("Terminal controls", [
+          "Tab completes, Up/Down recalls command history",
+          "history - show recent terminal commands",
+          "clear - clear output, reset terminal - clear output and command history",
+          "faq, security, privacy, research, export, backup, download backup, export imports, import backup, import data, clear imports, wipe confirm, sound"
+        ]);
+      }
+
+      function moduleKeyFromInput(value) {
+        const normalized = value.toLowerCase();
+        const aliases = {
+          a: "aim",
+          q: "questions",
+          quiz: "questions",
+          logic: "questions",
+          mem: "memory",
+          nback: "memory",
+          n: "memory",
+          stimulation: "memory",
+          stimuli: "memory",
+          quad: "memory",
+          creative: "creativity",
+          transfer: "analogy",
+          cal: "calibration",
+          meta: "calibration",
+          spc: "spatial",
+          x: "spatial",
+          relation: "rrt",
+          relational: "rrt",
+          rint: "rint",
+          rnback: "rint",
+          "relational-nback": "rint",
+          relationalnback: "rint",
+          "relational-n-back": "rint",
+          matrix: "rrt",
+          raven: "rrt"
+        };
+        return moduleInfo[normalized] ? normalized : aliases[normalized];
+      }
+
+      function memoryModeFromInput(value) {
+        const normalized = String(value || "").toLowerCase().replace(/[-_ ]/g, "");
+        const aliases = {
+          dual: "dual",
+          double: "dual",
+          multi: "multi",
+          multipos: "multi",
+          position: "multi",
+          stimuli: "manipulation",
+          stimulus: "manipulation",
+          stimulation: "manipulation",
+          manipulation: "manipulation",
+          manip: "manipulation",
+          quad: "quad",
+          quadruple: "quad"
+        };
+        return aliases[normalized];
+      }
+
+      function terminalCommandSuggestions(value) {
+        const normalized = value.trim().toLowerCase();
+        if (!normalized) return terminal.commands.slice(0, 10);
+        return terminal.commands.filter((command) => command.startsWith(normalized)).slice(0, 8);
+      }
+
+      function updateTerminalSuggest() {
+        const box = $("#terminalSuggest");
+        const input = $("#terminalInput");
+        if (!box || !input) return;
+        const suggestions = terminalCommandSuggestions(input.value);
+        box.textContent = suggestions.length
+          ? `suggest: ${suggestions.join("  |  ")}`
+          : "No direct match. Type help for commands.";
+      }
+
+      function completeTerminalInput() {
+        const input = $("#terminalInput");
+        if (!input) return;
+        const suggestions = terminalCommandSuggestions(input.value);
+        if (!suggestions.length) {
+          updateTerminalSuggest();
+          playSfx("wrong");
+          return;
+        }
+        const current = input.value.trim().toLowerCase();
+        if (suggestions.length === 1 || !current) {
+          input.value = suggestions[0];
+        } else {
+          const shared = commonPrefix(suggestions);
+          input.value = shared.length > current.length ? shared : suggestions[0];
+        }
+        updateTerminalSuggest();
+        playSfx("select");
+      }
+
+      function commonPrefix(items) {
+        if (!items.length) return "";
+        let prefix = items[0];
+        items.slice(1).forEach((item) => {
+          while (!item.startsWith(prefix) && prefix) prefix = prefix.slice(0, -1);
+        });
+        return prefix;
+      }
+
+      function rememberTerminalCommand(command) {
+        if (terminal.history[terminal.history.length - 1] !== command) terminal.history.push(command);
+        terminal.history = terminal.history.slice(-40);
+        terminal.historyIndex = terminal.history.length;
+      }
+
+      function recallTerminalHistory(direction) {
+        const input = $("#terminalInput");
+        if (!input || !terminal.history.length) return;
+        terminal.historyIndex = clamp(terminal.historyIndex + direction, 0, terminal.history.length);
+        input.value = terminal.historyIndex === terminal.history.length ? "" : terminal.history[terminal.historyIndex];
+        updateTerminalSuggest();
+      }
+
+      function terminalStatsLines() {
+        const progress = progressionSnapshot();
+        return [
+          `XP ${state.xp} | level ${levelFromXp(state.xp)} | streak ${state.streak} | sessions ${state.sessions}`,
+          `mastery ${progress.mastery}% | rank ${progress.rank} | training power ${progress.trainingPower}`,
+          `program ${state.settings.hardMode ? "hard" : "normal"} | depth ${["", "focused", "deep", "extreme"][state.settings.problemDepth]} | load ${["short", "standard", "heavy"][state.settings.sessionLoad]} | cap d${state.settings.difficultyCap} | timer ${Math.round(state.settings.answerTimerScale * 100)}% | trials ${Math.round(state.settings.trialCountScale * 100)}% | theme ${themeLabel(state.settings.theme)} | vfx ${["off", "low", "arcade", "max"][state.settings.vfx]}`
+        ];
+      }
+
+      function storageStatus() {
+        try {
+          const probe = `${STORAGE_KEY}:probe`;
+          localStorage.setItem(probe, "1");
+          localStorage.removeItem(probe);
+          return "available";
+        } catch {
+          return "blocked";
+        }
+      }
+
+      function securityLines() {
+        return [
+          "All progress is saved locally in this browser with localStorage; no password or server account is created by this static app.",
+          "Backup and import use sanitized JSON/CSV. Prototype-pollution keys are ignored, numbers are clamped, text fields are length-limited, and oversized imports are rejected.",
+          "External training exports are normalized locally into module, source, label, score, difficulty, and time. Password, token, secret, API key, email, and username fields are filtered before storage.",
+          "Visible session history is escaped before rendering, so tampered local data is treated as text instead of markup.",
+          "Use backup before wipe confirm. Wipe confirm removes only this app's local progress key. Clear imports removes only ported external rows.",
+          `localStorage: ${storageStatus()} | saved payload: ${Math.round(JSON.stringify(state).length / 1024)} KB | imported rows: ${state.ported.entries.length}`
+        ];
+      }
+
+      function moduleSummaryLine(key) {
+        const module = state.modules[key];
+        const ported = state.ported.summary[key];
+        return `${moduleInfo[key].code} ${moduleInfo[key].label}: stored d${module.difficulty}, effective d${moduleDifficulty(key)}, ${module.xp} XP, ${module.sessions} sessions, best ${module.best}%, ${module.lastNote}${ported ? `, ported ${ported.count} rows` : ""}`;
+      }
+
+      function setMemoryModeFromTerminal(modeToken) {
+        const mode = memoryModeFromInput(modeToken);
+        if (!mode) return false;
+        setMemoryMode(mode);
+        setView("memory");
+        terminalWrite(`Memory mode set to ${memoryModes[mode].label}. All n-back modes are unlocked.`, "success");
+        return true;
+      }
+
+      function setMemoryAdvancedFromTerminal(name, value) {
+        const key = String(name || "").toLowerCase();
+        const token = String(value || "").toLowerCase();
+        if (key === "pace" || key === "speed") {
+          const map = { measured: 0, slow: 0, fast: 1, pressure: 2, brutal: 2 };
+          const next = map[token] ?? finiteNumber(value, NaN, 0, 2);
+          if (!Number.isFinite(next)) return false;
+          state.modules.memory.pace = Math.round(next);
+        } else if (key === "lure" || key === "lures") {
+          const map = { low: 0, standard: 1, medium: 1, high: 2, brutal: 2 };
+          const next = map[token] ?? finiteNumber(value, NaN, 0, 2);
+          if (!Number.isFinite(next)) return false;
+          state.modules.memory.lure = Math.round(next);
+        } else if (key === "interference") {
+          if (!["on", "true", "yes", "1", "off", "false", "no", "0"].includes(token)) return false;
+          state.modules.memory.interference = ["on", "true", "yes", "1"].includes(token);
+        } else {
+          return false;
+        }
+        state.modules.memory = sanitizeModule("memory", state.modules.memory);
+        saveState();
+        setView("memory");
+        renderMemoryStats();
+        renderMemoryCard();
+        applySettings();
+        terminalWrite(`Memory ${key} set to ${token}.`, "success");
+        return true;
+      }
+
+      function setRrtModeFromTerminal(modeToken) {
+        const mode = String(modeToken || "").toLowerCase();
+        if (!["evidence", "frames", "transitive", "analogy", "matrix", "logic"].includes(mode)) return false;
+        setRrtMode(mode);
+        setView("rrt");
+        terminalWrite(`RRT mode set to ${mode}.`, "success");
+        return true;
+      }
+
+      function setRrtProtocolFromTerminal(protocolToken) {
+        const token = String(protocolToken || "").toLowerCase();
+        const protocol = {
+          eight: "eight-week",
+          "8": "eight-week",
+          "8-week": "eight-week",
+          eightweek: "eight-week",
+          block: "eight-week",
+          maintenance: "maintenance",
+          maintain: "maintenance",
+          assessment: "assessment",
+          assess: "assessment"
+        }[token] || token;
+        if (!["eight-week", "maintenance", "assessment"].includes(protocol)) return false;
+        setRrtProtocol(protocol);
+        setView("rrt");
+        terminalWrite(`RRT protocol set to ${protocol}.`, "success");
+        return true;
+      }
+
+      function terminalSourceLines() {
+        return [
+          "Dunlosky et al. 2013: practice testing and distributed practice have high utility across many learning contexts.",
+          "Owen et al. 2010: brain-training gains can be task-specific, so this app reports module performance and avoids claiming general IQ transfer.",
+          "Sala and Gobet 2019: broad cognitive-training transfer is limited in meta-analytic evidence, so the app emphasizes specific measured skills.",
+          "Karpicke and Blunt 2011: retrieval practice can beat elaborative review on delayed tests, supporting generated answer-first problems.",
+          "Kornell and Bjork 2008: interleaving category exemplars can improve induction, supporting mixed generators.",
+          "Hattie and Timperley 2007: feedback is most useful when it clarifies goals, current performance, and next actions.",
+          "Uttal et al. 2013: spatial skills are trainable, supporting Spatial and Systems transformation tasks.",
+          "Koriat 1997: confidence judgments depend on cues, supporting Calibration Lab and Brier-style feedback.",
+          "Rohrer and Taylor 2007 / Kornell and Bjork 2008: interleaving improves strategy selection and category discrimination.",
+          "Halford et al. 1998: relational complexity theory scales difficulty by how many relations must be integrated at once.",
+          "Waltz et al. 1999: Raven-like relational integration stresses rule binding and executive control, supporting graded matrix-style RRT.",
+          "Dumontheil et al. 2010: relational reasoning improves with interference control, so RRT includes distractors and cross-relation switching.",
+          "Mackey et al. 2011: reasoning training emphasized planning and relational integration for 60-minute sessions, 2 days/week, for 8 weeks.",
+          "Cassidy, Roche, and Hayes 2011: automated multiple-exemplar relational frame training used SAME, OPPOSITE, MORE THAN, and LESS THAN frames.",
+          "Son, Smith, and Goldstone 2011: simultaneous comparison of simple and complex instances improved relational generalization.",
+          "Guerra-Carrillo and Bunge 2018: reasoning practice was associated with relational-thinking efficiency on transitive inference tasks.",
+          "Relational N-Back PDF: recommends staged RINT, adaptive N=2-4, mixed switching, heterogeneous tokens, and clear caveats about contested transfer."
+        ];
+      }
+
+      function dailyPlanLines() {
+        const modules = Object.keys(moduleInfo).sort((a, b) => (state.quests[a] ? 1 : 0) - (state.quests[b] ? 1 : 0));
+        return modules.slice(0, 5).map((key, index) => {
+          const action = index === 0 ? "Start" : "Then";
+          return `${action}: ${moduleInfo[key].label} at effective d${moduleDifficulty(key)} - ${state.quests[key] ? "maintenance" : "open quest"}`;
+        });
+      }
+
+      function rrtPlanLines() {
+        return [
+          "Block design: 2-4 RRT blocks/week, 8 weeks, 10-20 minutes per block in this app; stop if accuracy drops under 45% twice.",
+          "Relation families: same/opposite, more-less, before-after, class inclusion, transitive inference, analogies, proportional relations, matrix rule induction.",
+          "Stimuli: start with simple symbolic or verbal instances, then mix in dissimilar surface examples to force structure over appearance.",
+          "Progression: increase relation load only after 2 recent blocks at 80%+; drop or hold difficulty when performance collapses.",
+          "Transfer policy: the app reports trained-task gains and near-transfer signals; it does not claim guaranteed broad IQ transfer."
+        ];
+      }
+
+      function doctorLines() {
+        const idsOk = Boolean($("#terminalOutput") && $("#memoryGrid") && $("#systemsAnswerGrid"));
+        return [
+          `DOM critical ids: ${idsOk ? "ok" : "missing"}`,
+          `local state modules: ${Object.keys(moduleInfo).every((key) => Boolean(state.modules[key])) ? "ok" : "repair needed"}`,
+          `n-back modes: ${Object.keys(memoryModes).map((key) => memoryModes[key].label).join(", ")} all unlocked`,
+          `RINT protocol: ${state.modules.rint.stage}, N ${state.modules.rint.nMin}-${state.modules.rint.nMax}, ${state.modules.rint.relationSet} relations, ${state.modules.rint.switchMode} switch`,
+          `vfx: ${["off", "low", "arcade", "max"][state.settings.vfx]} | theme: ${themeLabel(state.settings.theme)}`,
+          `history entries: ${state.history.length}`,
+          `storage: ${storageStatus()} | payload ${Math.round(JSON.stringify(state).length / 1024)} KB`
+        ];
+      }
+
+      function startModuleFromTerminal(key) {
+        setView(moduleInfo[key].view);
+        const starters = {
+          aim: startAimRound,
+          questions: startQuiz,
+          memory: startMemoryStream,
+          focus: startFocusSet,
+          creativity: startCreativeSprint,
+          analogy: generateAnalogyChallenge,
+          spatial: startSpatialSet,
+          calibration: startCalibrationSet,
+          systems: startSystemsSet,
+          rint: startRintStream,
+          rrt: startRrtSet
+        };
+        if (starters[key]) {
+          starters[key]();
+          terminalWrite(`Started ${moduleInfo[key].label}.`, "success");
+        } else {
+          terminalWrite(`Opened ${moduleInfo[key].label}. This module needs a written response before scoring.`, "system");
+        }
+      }
+
+      function adjustAllDifficulties(delta) {
+        Object.keys(moduleInfo).forEach((key) => {
+          state.modules[key].difficulty = clamp(state.modules[key].difficulty + delta, 1, 10);
+          state.modules[key].lastNote = delta > 0 ? "Difficulty boosted from terminal." : "Difficulty lowered from terminal.";
+        });
+        saveState();
+        renderAll();
+        terminalWrite(`${delta > 0 ? "Boosted" : "Lowered"} all stored difficulties by ${Math.abs(delta)}.`, "success");
+        playSfx("complete");
+      }
+
+      function setAllDifficulties(value, note = "Difficulty set from terminal bulk control.") {
+        const difficulty = Math.round(finiteNumber(value, NaN, 1, 10));
+        if (!Number.isFinite(difficulty)) return false;
+        Object.keys(moduleInfo).forEach((key) => {
+          state.modules[key].difficulty = difficulty;
+          state.modules[key].lastNote = note;
+        });
+        saveState();
+        renderAll();
+        terminalWrite(`All modules set to stored d${difficulty}.`, "success");
+        playSfx("complete");
+        return true;
+      }
+
+      function capAllDifficulties(value) {
+        const capValue = Math.round(finiteNumber(value, NaN, 3, 12));
+        if (!Number.isFinite(capValue)) return false;
+        state.settings.difficultyCap = capValue;
+        Object.keys(moduleInfo).forEach((key) => {
+          state.modules[key].difficulty = Math.min(state.modules[key].difficulty, capValue);
+          state.modules[key].lastNote = `Difficulty capped at d${capValue} from terminal.`;
+        });
+        saveState();
+        renderAll();
+        terminalWrite(`All stored difficulties capped at d${capValue}.`, "success");
+        playSfx("complete");
+        return true;
+      }
+
+      function randomizeDifficulties() {
+        Object.keys(moduleInfo).forEach((key) => {
+          state.modules[key].difficulty = Math.floor(Math.random() * 10) + 1;
+          state.modules[key].lastNote = "Difficulty randomized from terminal.";
+        });
+        saveState();
+        renderAll();
+        terminalWrite("All module difficulties randomized from d1-d10.", "success");
+        playSfx("level");
+      }
+
+      function applyProgramPreset(name) {
+        const preset = String(name || "").toLowerCase();
+        if (preset === "brutal") {
+          state.settings.hardMode = true;
+          state.settings.problemDepth = 3;
+          state.settings.sessionLoad = 2;
+          state.settings.vfx = 3;
+        } else if (preset === "calm") {
+          state.settings.hardMode = false;
+          state.settings.problemDepth = 1;
+          state.settings.sessionLoad = 0;
+          state.settings.vfx = 1;
+        } else if (preset === "balanced" || preset === "normal") {
+          state.settings.hardMode = preset !== "normal";
+          state.settings.problemDepth = 2;
+          state.settings.sessionLoad = 1;
+          state.settings.vfx = 2;
+        } else if (preset === "hard") {
+          state.settings.hardMode = true;
+          state.settings.problemDepth = 3;
+          state.settings.sessionLoad = 2;
+        } else {
+          return false;
+        }
+        saveState();
+        renderAll();
+        playSfx(preset === "brutal" ? "level" : "complete");
+        return true;
+      }
+
+      function setThemeMode(theme) {
+        const value = String(theme || "").toLowerCase();
+        if (!visualThemeIds.includes(value)) return false;
+        state.settings.theme = value;
+        state.settings.identityVersion = IDENTITY_VERSION;
+        saveState();
+        renderAll();
+        playSfx("select");
+        return true;
+      }
+
+      function setVfxLevel(value) {
+        const map = { off: 0, low: 1, arcade: 2, max: 3 };
+        const level = map[String(value).toLowerCase()] ?? finiteNumber(value, NaN, 0, 3);
+        if (!Number.isFinite(level)) return false;
+        state.settings.vfx = Math.round(level);
+        saveState();
+        renderAll();
+        triggerVfx("level");
+        return true;
+      }
+
+      function setColorSystem(mode, value) {
+        const key = String(mode || "").toLowerCase();
+        if (!colorModeIds.includes(key)) return false;
+        state.settings.colorMode = key;
+        if (key === "hue") state.settings.colorHue = normalizeHue(value, state.settings.colorHue);
+        if (key === "code") state.settings.colorCode = normalizeHexColor(value, state.settings.colorCode);
+        if (key === "hash") state.settings.colorHash = safeString(value, state.settings.colorHash, 48).trim() || defaultState.settings.colorHash;
+        state.settings = sanitizeSettings(state.settings);
+        saveState();
+        renderAll();
+        triggerVfx("level");
+        return true;
+      }
+
+      function setTerminalSetting(name, value) {
+        const key = String(name || "").toLowerCase();
+        const token = String(value || "").toLowerCase();
+        const on = ["on", "true", "yes", "1", "full"].includes(token);
+        const off = ["off", "false", "no", "0", "low"].includes(token);
+        if (key === "volume") {
+          const raw = finiteNumber(value, state.settings.volume * 100, 0, 100);
+          state.settings.volume = raw <= 1 ? raw : raw / 100;
+        }
+        else if (key === "density") state.settings.density = { compact: 0, standard: 1, spacious: 2 }[token] ?? Math.round(finiteNumber(value, state.settings.density, 0, 2));
+        else if (key === "depth") state.settings.problemDepth = { focused: 1, deep: 2, extreme: 3 }[token] ?? Math.round(finiteNumber(value, state.settings.problemDepth, 1, 3));
+        else if (key === "load") state.settings.sessionLoad = { short: 0, standard: 1, heavy: 2 }[token] ?? Math.round(finiteNumber(value, state.settings.sessionLoad, 0, 2));
+        else if (key === "cap" || key === "difficultycap") state.settings.difficultyCap = Math.round(finiteNumber(value, state.settings.difficultyCap, 3, 12));
+        else if (key === "timer" || key === "answertimer") state.settings.answerTimerScale = finiteNumber(value, state.settings.answerTimerScale, 0.65, 1.6);
+        else if (key === "trials" || key === "trialcount") state.settings.trialCountScale = finiteNumber(value, state.settings.trialCountScale, 0.7, 1.55);
+        else if (key === "lure" || key === "lures") state.settings.lurePressure = { low: 0, standard: 1, medium: 1, high: 2, brutal: 2 }[token] ?? Math.round(finiteNumber(value, state.settings.lurePressure, 0, 2));
+        else if (key === "adaptive") state.settings.adaptive = on ? true : off ? false : state.settings.adaptive;
+        else if (key === "ported" || key === "imports") state.settings.usePortedData = on ? true : off ? false : state.settings.usePortedData;
+        else if (key === "sfx") state.settings.sfx = on ? true : off ? false : state.settings.sfx;
+        else if (key === "cursor") state.settings.customCursor = on ? true : off ? false : state.settings.customCursor;
+        else if (key === "motion") state.settings.lowMotion = token === "low" || token === "reduced";
+        else if (key === "hard") state.settings.hardMode = on ? true : off ? false : state.settings.hardMode;
+        else if (key === "vfx") return setVfxLevel(value);
+        else if (key === "theme") return setThemeMode(value);
+        else if (key === "color") return setColorSystem(value, state.settings.colorMode === "hash" ? state.settings.colorHash : undefined);
+        else if (key === "hue") return setColorSystem("hue", value);
+        else if (key === "code") return setColorSystem("code", value);
+        else if (key === "hash") return setColorSystem("hash", value);
+        else if (key === "gui") {
+          if (!["simple", "regular", "complex"].includes(token)) return false;
+          state.settings.guiMode = token;
+        }
+        else return false;
+        state.settings = sanitizeSettings(state.settings);
+        saveState();
+        renderAll();
+        playSfx("complete");
+        return true;
+      }
+
+      function runTerminalCommand(raw) {
+        const command = raw.trim();
+        if (!command) return;
+        rememberTerminalCommand(command);
+        terminalWrite(`${$("#terminalPrompt")?.textContent || "smart101>"} ${command}`, "command");
+        const tokens = command.toLowerCase().split(/\s+/);
+        const rawTokens = command.split(/\s+/);
+        const [verb, second, third, fourth] = tokens;
+        if (verb === "help") {
+          terminalHelp();
+          return;
+        }
+        if (verb === "clear" && second === "imports") {
+          clearPortedTrainingData();
+          terminalWrite("Imported external rows cleared. Local sessions remain.", "success");
+          return;
+        }
+        if (verb === "clear") {
+          $("#terminalOutput").innerHTML = "";
+          return;
+        }
+        if (verb === "reset" && second === "terminal") {
+          $("#terminalOutput").innerHTML = "";
+          terminal.history = [];
+          terminal.historyIndex = -1;
+          terminalWrite("Terminal reset. Command history cleared.", "system");
+          return;
+        }
+        if (verb === "stats") {
+          terminalWriteBlock("Training stats", terminalStatsLines(), "system");
+          terminalWriteBlock("Module table", Object.keys(moduleInfo).map(moduleSummaryLine));
+          renderTerminalStatus();
+          return;
+        }
+        if (verb === "faq") {
+          setView("faq");
+          terminalWrite("Opened FAQ. Try security, privacy, backup, import backup, or wipe confirm for data controls.", "system");
+          return;
+        }
+        if (verb === "security" || verb === "privacy") {
+          terminalWriteBlock(verb === "security" ? "Security model" : "Privacy model", securityLines(), "system");
+          return;
+        }
+        if (verb === "ported") {
+          const rows = Object.keys(state.ported.summary || {}).map((key) => {
+            const item = state.ported.summary[key];
+            return `${moduleInfo[key].label}: ${item.count} rows, ${Math.round(item.avgScore * 100)}% avg, suggested d${portedSuggestedDifficulty(key) || Math.round(item.avgDifficulty || 1)}`;
+          });
+          terminalWriteBlock("Ported training data", rows.length ? rows : ["No external data imported yet."], "system");
+          return;
+        }
+        if (verb === "program") {
+          terminalWriteBlock("Current program", [
+            `hard mode: ${state.settings.hardMode ? "on" : "off"}`,
+            `adaptive difficulty: ${state.settings.adaptive ? "on" : "off"}`,
+            `problem depth: ${["", "focused", "deep", "extreme"][state.settings.problemDepth] || "deep"}`,
+            `session load: ${["short", "standard", "heavy"][state.settings.sessionLoad] || "standard"}`,
+            `task controls: cap d${state.settings.difficultyCap}, answer timer ${Math.round(state.settings.answerTimerScale * 100)}%, trial count ${Math.round(state.settings.trialCountScale * 100)}%, lure pressure ${["low", "standard", "high"][state.settings.lurePressure] || "standard"}`,
+            `theme: ${themeLabel(state.settings.theme)}`,
+            `vfx: ${["off", "low", "arcade", "max"][state.settings.vfx]}`,
+            `sfx volume: ${Math.round(state.settings.volume * 100)}%`,
+            `imported data signal: ${state.settings.usePortedData ? "on" : "off"} (${state.ported.entries.length} rows)`,
+            `effective difficulty adds ${state.settings.hardMode ? "+2 hidden load" : "+0 hidden load"}`
+          ]);
+          return;
+        }
+        if (verb === "terminal" && ["compact", "standard", "spacious"].includes(second)) {
+          setTerminalSetting("density", second);
+          terminalWrite(`Interface density set to ${second}.`, "success");
+          return;
+        }
+        if (verb === "modules" || verb === "ls") {
+          terminalWriteBlock("Modules", Object.keys(moduleInfo).map(moduleSummaryLine), "system");
+          return;
+        }
+        if (verb === "quests") {
+          terminalWriteBlock("Daily quests", Object.keys(moduleInfo).map((key) => {
+            return `${state.quests[key] ? "[done]" : "[open]"} ${moduleInfo[key].short}: ${moduleInfo[key].quest}`;
+          }), "system");
+          return;
+        }
+        if (verb === "history") {
+          terminalWriteBlock("Recent commands", terminal.history.length ? terminal.history.slice(-12).map((item, index) => `${index + 1}. ${item}`) : ["No commands yet."], "system");
+          return;
+        }
+        if (verb === "sources" || verb === "studies" || verb === "research") {
+          if (verb === "research") setView("research");
+          terminalWriteBlock("Study base", terminalSourceLines(), "system");
+          return;
+        }
+        if (verb === "doctor") {
+          terminalWriteBlock("System doctor", doctorLines(), "system");
+          return;
+        }
+        if (verb === "import" && second === "data") {
+          setView("terminal");
+          $("#portedDataBox").focus();
+          terminalWrite("Paste exported training JSON/CSV into Data Port, choose the source, then press Import external data.", "system");
+          return;
+        }
+        if (verb === "export") {
+          if (second === "imports" || second === "ported" || second === "data") {
+            downloadPortedData();
+            terminalWrite("Imported external rows exported as a local JSON file.", "success");
+          } else {
+            copyProgressReport();
+            terminalWrite("Progress report copied when browser permissions allow it. Use download backup for a restorable JSON file.", "system");
+          }
+          return;
+        }
+        if (verb === "copy" && (second === "imports" || second === "ported")) {
+          copyPortedData();
+          terminalWrite("Imported-data JSON copied when browser permissions allow it.", "system");
+          return;
+        }
+        if (verb === "backup" || (verb === "copy" && second === "backup")) {
+          copyBackupData();
+          terminalWrite("Backup JSON sent to clipboard when browser permissions allow it.", "system");
+          return;
+        }
+        if (verb === "download" && second === "backup") {
+          downloadBackupData();
+          terminalWrite("Backup downloaded as a restorable JSON file.", "success");
+          return;
+        }
+        if (verb === "import" && second === "backup") {
+          setView("terminal");
+          $("#terminalImportBox").focus();
+          terminalWrite("Paste backup JSON into the Import backup box, then press Import.", "system");
+          return;
+        }
+        if (verb === "wipe" && second === "confirm") {
+          localStorage.removeItem(STORAGE_KEY);
+          state = refreshDailyState(clone(defaultState));
+          saveState();
+          renderAll();
+          terminalWrite("Local training progress wiped for this app key only.", "success");
+          playSfx("complete");
+          return;
+        }
+        if (verb === "daily" && second === "plan") {
+          terminalWriteBlock("Daily training plan", dailyPlanLines(), "system");
+          return;
+        }
+        if (verb === "rrt" && second === "plan") {
+          setView("rrt");
+          terminalWriteBlock("Relational reasoning training plan", rrtPlanLines(), "system");
+          return;
+        }
+        if (verb === "rrt" && second === "mode") {
+          if (!setRrtModeFromTerminal(third)) {
+            terminalWrite("Usage: rrt mode evidence | frames | transitive | analogy | matrix | logic", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if (verb === "rrt" && second === "protocol") {
+          if (!setRrtProtocolFromTerminal(third)) {
+            terminalWrite("Usage: rrt protocol eight-week | maintenance | assessment", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if (verb === "rint" && (second === "protocol" || second === "plan" || !second)) {
+          setView("rint");
+          terminalWriteBlock("Relational N-Back protocol", rintProtocolLines(), "system");
+          return;
+        }
+        if (verb === "rint" && second === "stage") {
+          if (!setRintStage(third)) {
+            terminalWrite("Usage: rint stage calibration | load | mixed", "error");
+            playSfx("wrong");
+            return;
+          }
+          setView("rint");
+          terminalWrite(`RINT stage set to ${state.modules.rint.stage}.`, "success");
+          return;
+        }
+        if (verb === "rint" && second === "n") {
+          if (!setRintN(third, fourth || third)) {
+            terminalWrite("Usage: rint n 2 4", "error");
+            playSfx("wrong");
+            return;
+          }
+          setView("rint");
+          terminalWrite(`RINT N range set to ${state.modules.rint.nMin}-${state.modules.rint.nMax}.`, "success");
+          return;
+        }
+        if (verb === "rint" && (second === "relations" || second === "relation")) {
+          if (!setRintRelations(third || "all")) {
+            terminalWrite("Usage: rint relations all | spatial | trait | quant | verbal | temporal | directional", "error");
+            playSfx("wrong");
+            return;
+          }
+          setView("rint");
+          terminalWrite(`RINT relations set to ${state.modules.rint.relationSet}.`, "success");
+          return;
+        }
+        if (verb === "rint" && second === "distractors") {
+          if (!setRintDistractors(third)) {
+            terminalWrite("Usage: rint distractors on | off", "error");
+            playSfx("wrong");
+            return;
+          }
+          setView("rint");
+          terminalWrite(`RINT distractors ${state.modules.rint.distractors ? "on" : "off"}.`, "success");
+          return;
+        }
+        if (verb === "rint" && (second === "switch" || second === "mode")) {
+          if (!setRintSwitchMode(third)) {
+            terminalWrite("Usage: rint switch normal | type | rint | mixed | binary", "error");
+            playSfx("wrong");
+            return;
+          }
+          setView("rint");
+          terminalWrite(`RINT switch mode set to ${state.modules.rint.switchMode}.`, "success");
+          return;
+        }
+        if (verb === "nback") {
+          if (!setMemoryModeFromTerminal(second || "quad")) {
+            terminalWrite("Usage: nback dual | multi | stimuli | quad", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if ((verb === "quad" || verb === "stimuli" || verb === "stimulation") && second === "nback") {
+          setMemoryModeFromTerminal(verb);
+          return;
+        }
+        if (verb === "memory" && second === "mode") {
+          if (!setMemoryModeFromTerminal(third)) {
+            terminalWrite("Usage: memory mode dual | multi | stimuli | quad", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if (verb === "memory" && ["pace", "speed", "lure", "lures", "interference"].includes(second)) {
+          if (!setMemoryAdvancedFromTerminal(second, third)) {
+            terminalWrite("Usage: memory pace measured|fast|pressure, memory lure low|standard|high, memory interference on|off", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if (verb === "challenge") {
+          const key = moduleKeyFromInput(second || "systems") || "systems";
+          state.modules[key].difficulty = 10;
+          state.modules[key].lastNote = "Brutal challenge set from terminal.";
+          applyProgramPreset("brutal");
+          startModuleFromTerminal(key);
+          terminalWrite(`Challenge launched: ${moduleInfo[key].label} at stored d10 plus brutal preset.`, "success");
+          return;
+        }
+        if (verb === "info") {
+          const key = moduleKeyFromInput(second || "");
+          if (!key) {
+            terminalWrite("Usage: info <module>", "error");
+            playSfx("wrong");
+            return;
+          }
+          terminalWriteBlock(moduleInfo[key].label, [
+            moduleInfo[key].description,
+            `skill: ${moduleInfo[key].skill}`,
+            `quest: ${moduleInfo[key].quest}`,
+            moduleSummaryLine(key)
+          ], "system");
+          return;
+        }
+        if (verb === "hard") {
+          applyProgramPreset("hard");
+          terminalWrite("Hard program active: +2 effective difficulty, extreme problem depth, heavy session load.", "system");
+          return;
+        }
+        if (verb === "normal") {
+          applyProgramPreset("normal");
+          terminalWrite("Normal program active: stored difficulties remain, hidden hard bonus removed.", "system");
+          return;
+        }
+        if (verb === "preset") {
+          if (!applyProgramPreset(second)) {
+            terminalWrite("Usage: preset brutal | balanced | calm", "error");
+            playSfx("wrong");
+            return;
+          }
+          terminalWrite(`Applied ${second} preset.`, "success");
+          return;
+        }
+        if (verb === "theme") {
+          if (!setThemeMode(second)) {
+            terminalWrite("Usage: theme geist | classic | matrix | neon | contrast", "error");
+            playSfx("wrong");
+            return;
+          }
+          terminalWrite(`Theme set to ${themeLabel(state.settings.theme)}.`, "success");
+          return;
+        }
+        if (verb === "color") {
+          const colorValue = rawTokens.slice(2).join(" ");
+          if (!setColorSystem(second, colorValue)) {
+            terminalWrite("Usage: color identity | color hue 210 | color code #c8a958 | color hash brain.exe", "error");
+            playSfx("wrong");
+            return;
+          }
+          terminalWrite(`Color engine set to ${colorModeLabel(state.settings.colorMode)} (${resolveColorHue()} deg).`, "success");
+          return;
+        }
+        if (verb === "vfx") {
+          if (!setVfxLevel(second)) {
+            terminalWrite("Usage: vfx off | low | arcade | max | 0-3", "error");
+            playSfx("wrong");
+            return;
+          }
+          terminalWrite(`VFX set to ${["off", "low", "arcade", "max"][state.settings.vfx]}.`, "success");
+          return;
+        }
+        if (verb === "train" || verb === "open" || verb === "cd") {
+          const key = moduleKeyFromInput(second || "");
+          if (!key) {
+            terminalWrite("Unknown module. Try train memory, train spatial, or train calibration.", "error");
+            playSfx("wrong");
+            return;
+          }
+          setView(moduleInfo[key].view);
+          terminalWrite(`Opened ${moduleInfo[key].label}.`, "system");
+          return;
+        }
+        if (verb === "start" || verb === "run") {
+          const key = moduleKeyFromInput(second || "");
+          if (!key) {
+            terminalWrite("Usage: start <module>", "error");
+            playSfx("wrong");
+            return;
+          }
+          startModuleFromTerminal(key);
+          return;
+        }
+        if (verb === "set") {
+          if (second === "all") {
+            if (!setAllDifficulties(third)) {
+              terminalWrite("Usage: set all <1-10>", "error");
+              playSfx("wrong");
+            }
+            return;
+          }
+          if (setTerminalSetting(second, third)) {
+            terminalWrite(`${second} set to ${third}.`, "success");
+            return;
+          }
+          const key = moduleKeyFromInput(second || "");
+          const value = clamp(Number(third), 1, 10);
+          if (!key || Number.isNaN(value)) {
+            terminalWrite("Usage: set <module> <1-10>", "error");
+            playSfx("wrong");
+            return;
+          }
+          state.modules[key].difficulty = value;
+          state.modules[key].lastNote = "Difficulty set manually from terminal.";
+          saveState();
+          renderAll();
+          terminalWrite(`${moduleInfo[key].label} set to stored d${value}, effective d${moduleDifficulty(key)}.`, "system");
+          playSfx("complete");
+          return;
+        }
+        if (verb === "cap" && second === "difficulty") {
+          if (!capAllDifficulties(third)) {
+            terminalWrite("Usage: cap difficulty <1-10>", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if (verb === "normalize" && (second === "difficulties" || second === "difficulty" || !second)) {
+          if (!setAllDifficulties(third || 5, "Difficulty normalized from terminal.")) {
+            terminalWrite("Usage: normalize difficulties <optional 1-10>", "error");
+            playSfx("wrong");
+          }
+          return;
+        }
+        if (verb === "randomize" && (second === "difficulties" || second === "difficulty")) {
+          randomizeDifficulties();
+          return;
+        }
+        if (verb === "boost" || verb === "lower") {
+          const amountToken = second === "all" ? third : second;
+          const amount = clamp(Number(amountToken || 1), 1, 3);
+          if (Number.isNaN(amount)) {
+            terminalWrite(`Usage: ${verb} all <1-3>`, "error");
+            playSfx("wrong");
+            return;
+          }
+          adjustAllDifficulties(verb === "boost" ? amount : -amount);
+          return;
+        }
+        if (verb === "export") {
+          copyProgressReport();
+          terminalWrite("Progress report sent to clipboard when browser permissions allow it.", "system");
+          return;
+        }
+        if (verb === "sound") {
+          playSfx("level");
+          terminalWrite("Played level SFX.", "system");
+          return;
+        }
+        terminalWrite("Unknown command. Type help.", "error");
+        playSfx("wrong");
+      }
+
+      function setupCanvas() {
+        const canvas = $("#fieldCanvas");
+        const ctx = canvas.getContext("2d");
+        let idleFrame = 0;
+        const particles = Array.from({ length: 54 }, () => ({
+          x: Math.random(),
+          y: Math.random(),
+          vx: (Math.random() - 0.5) * 0.0007,
+          vy: (Math.random() - 0.5) * 0.0007,
+          size: 1 + Math.random() * 2.4
+        }));
+
+        function draw() {
+          const stage = $("#aimStage");
+          const rect = stage.getBoundingClientRect();
+          if (state.settings.lowMotion || currentView !== "aim") {
+            idleFrame = window.setTimeout(() => window.requestAnimationFrame(draw), 500);
+            return;
+          }
+          ctx.clearRect(0, 0, rect.width, rect.height);
+          particles.forEach((particle, index) => {
+            particle.x += particle.vx * (1 + moduleDifficulty("aim") * 0.12);
+            particle.y += particle.vy * (1 + moduleDifficulty("aim") * 0.12);
+            if (particle.x < 0 || particle.x > 1) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > 1) particle.vy *= -1;
+            particle.x = clamp(particle.x, 0, 1);
+            particle.y = clamp(particle.y, 0, 1);
+            const x = particle.x * rect.width;
+            const y = particle.y * rect.height;
+            ctx.fillStyle = index % 4 === 0 ? "rgba(246, 216, 111, 0.78)" : "rgba(247, 240, 223, 0.48)";
+            ctx.beginPath();
+            ctx.arc(x, y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+          window.requestAnimationFrame(draw);
+        }
+
+        window.addEventListener("resize", () => {
+          window.clearTimeout(idleFrame);
+          resizeCanvas();
+        });
+        resizeCanvas();
+        draw();
+      }
+
+      function resizeCanvas() {
+        const canvas = $("#fieldCanvas");
+        const stage = $("#aimStage");
+        if (!canvas || !stage) return;
+        const rect = stage.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function bindEvents() {
+        $$(".nav-btn").forEach((button) => on(button, "click", () => setView(button.dataset.view), `open ${button.dataset.view}`));
+        $$("[data-start-view]").forEach((button) => on(button, "click", () => setView(button.dataset.startView), `start ${button.dataset.startView}`));
+        on($("#startAim"), "click", startAimRound, "start aim");
+        on($("#stopAim"), "click", stopAimRound, "stop aim");
+        on($("#aimTarget"), "click", hitTarget, "hit target");
+        on($("#aimStage"), "click", missTarget, "miss target");
+        on($("#startQuiz"), "click", startQuiz, "start quiz");
+        on($("#nextQuestion"), "click", nextQuestion, "next question");
+        on($("#startMemory"), "click", startMemoryStream, "start memory");
+        on($("#stopMemory"), "click", stopMemoryStream, "stop memory");
+        $$("[data-memory-mode]").forEach((button) => on(button, "click", () => setMemoryMode(button.dataset.memoryMode), `memory ${button.dataset.memoryMode}`));
+        on($("#memoryPaceSelect"), "change", saveMemoryAdvancedSettings, "memory pace");
+        on($("#memoryLureSelect"), "change", saveMemoryAdvancedSettings, "memory lure");
+        on($("#memoryInterferenceToggle"), "change", saveMemoryAdvancedSettings, "memory interference");
+        on($("#memorySymbolMatch"), "click", () => answerMemory("symbol"), "memory symbol");
+        on($("#memoryPositionMatch"), "click", () => answerMemory("position"), "memory position");
+        on($("#memoryColorMatch"), "click", () => answerMemory("color"), "memory color");
+        on($("#memoryTransformMatch"), "click", () => answerMemory("transform"), "memory transform");
+        on($("#memoryNoMatch"), "click", () => answerMemory("none"), "memory no match");
+        on($("#memorySubmit"), "click", submitMemoryAnswer, "memory submit");
+        on($("#startFocus"), "click", startFocusSet, "start focus");
+        on($("#stopFocus"), "click", stopFocusSet, "stop focus");
+        $$(".color-btn").forEach((button) => on(button, "click", () => answerFocus(button.dataset.color), `focus ${button.dataset.color}`));
+        on($("#startCreative"), "click", startCreativeSprint, "start creative");
+        on($("#newCreativePrompt"), "click", generateCreativePrompt, "new prompt");
+        on($("#submitCreative"), "click", scoreCreativeSprint, "score creative");
+        on($("#clearCreative"), "click", () => {
+          $("#ideaBox").value = "";
+          renderCreativeConfig();
+        }, "clear creative");
+        on($("#ideaBox"), "input", renderCreativeConfig, "idea input");
+        $$("[data-creative-method]").forEach((button) => {
+          on(button, "click", () => {
+            $$("[data-creative-method]").forEach((item) => item.classList.remove("is-active"));
+            button.classList.add("is-active");
+            creativeMethod = button.dataset.creativeMethod;
+            generateCreativePrompt();
+          }, `creative ${button.dataset.creativeMethod}`);
+        });
+        on($("#generateAnalogy"), "click", generateAnalogyChallenge, "generate analogy");
+        on($("#submitAnalogy"), "click", scoreAnalogy, "score analogy");
+        ["#mapOne", "#mapTwo", "#mapThree", "#mapFour", "#analogyProblem"].forEach((selector) => {
+          on($(selector), "input", renderAnalogyStats, `${selector} input`);
+        });
+        on($("#startSpatial"), "click", startSpatialSet, "start spatial");
+        on($("#nextSpatial"), "click", nextSpatialProblem, "next spatial");
+        on($("#startCalibration"), "click", startCalibrationSet, "start calibration");
+        on($("#nextCalibration"), "click", nextCalibrationQuestion, "next calibration");
+        on($("#confidenceSlider"), "input", renderCalibrationStats, "confidence slider");
+        on($("#startSystems"), "click", startSystemsSet, "start systems");
+        on($("#nextSystems"), "click", nextSystemsProblem, "next systems");
+        on($("#systemsModeSelect"), "change", () => setSystemsMode($("#systemsModeSelect").value), "systems mode");
+        on($("#systemsDetailSelect"), "change", () => {
+          state.settings.problemDepth = Number($("#systemsDetailSelect").value);
+          saveState();
+          renderAll();
+        }, "systems detail");
+        on($("#startRint"), "click", startRintStream, "start rint");
+        on($("#stopRint"), "click", stopRintStream, "stop rint");
+        on($("#nextRint"), "click", nextRintTrial, "next rint");
+        on($("#rintMatch"), "click", () => answerRint(true, $("#rintMatch")), "rint match");
+        on($("#rintNoMatch"), "click", () => answerRint(false, $("#rintNoMatch")), "rint no match");
+        on($("#rintStageSelect"), "change", saveRintSettings, "rint stage");
+        on($("#rintNMinSelect"), "change", saveRintSettings, "rint n min");
+        on($("#rintNMaxSelect"), "change", saveRintSettings, "rint n max");
+        on($("#rintRelationSelect"), "change", saveRintSettings, "rint relations");
+        on($("#rintTokenSelect"), "change", saveRintSettings, "rint tokens");
+        on($("#rintSwitchSelect"), "change", saveRintSettings, "rint switch");
+        on($("#rintDistractorToggle"), "change", saveRintSettings, "rint distractors");
+        on($("#startRrt"), "click", startRrtSet, "start rrt");
+        on($("#nextRrt"), "click", nextRrtProblem, "next rrt");
+        on($("#rrtModeSelect"), "change", () => setRrtMode($("#rrtModeSelect").value), "rrt mode");
+        on($("#rrtProtocolSelect"), "change", () => setRrtProtocol($("#rrtProtocolSelect").value), "rrt protocol");
+        on($("#exportProgress"), "click", copyProgressReport, "export progress");
+        on($("#resetProgress"), "click", resetProgressData, "reset progress");
+        on($("#saveSettings"), "click", saveSettingsFromForm, "save settings");
+        on($("#quickSettings"), "click", () => setView("settings"), "quick settings");
+        on($("#quickSound"), "click", () => playSfx("level"), "quick sound");
+        on($("#quickJumpSelect"), "change", () => setView($("#quickJumpSelect").value), "quick jump");
+        on($("#quickProgramSelect"), "change", () => {
+          applyProgramPreset($("#quickProgramSelect").value);
+          renderAll();
+        }, "quick program");
+        on($("#quickVfxSelect"), "change", () => setVfxLevel($("#quickVfxSelect").value), "quick vfx");
+        on($("#settingVolume"), "input", () => {
+          state.settings.volume = Number($("#settingVolume").value) / 100;
+          $("#volumeLabel").textContent = `${Math.round(state.settings.volume * 100)}%`;
+        }, "volume");
+        on($("#settingTheme"), "input", () => {
+          $("#densityLabel").textContent = ["compact", "standard", "spacious"][Number($("#settingTheme").value)] || "standard";
+        }, "density");
+        on($("#settingProblemDepth"), "input", () => {
+          $("#problemDepthLabel").textContent = ["", "focused", "deep", "extreme"][Number($("#settingProblemDepth").value)] || "deep";
+        }, "problem depth");
+        on($("#settingSessionLoad"), "input", () => {
+          $("#sessionLoadLabel").textContent = ["short", "standard", "heavy"][Number($("#settingSessionLoad").value)] || "standard";
+        }, "session load");
+        on($("#settingDifficultyCap"), "input", () => {
+          $("#difficultyCapLabel").textContent = `d${Number($("#settingDifficultyCap").value)}`;
+        }, "difficulty cap");
+        on($("#settingAnswerTimerScale"), "change", () => {
+          $("#answerTimerScaleLabel").textContent = `${Math.round(Number($("#settingAnswerTimerScale").value) * 100)}%`;
+        }, "answer timer scale");
+        on($("#settingTrialCountScale"), "change", () => {
+          $("#trialCountScaleLabel").textContent = `${Math.round(Number($("#settingTrialCountScale").value) * 100)}%`;
+        }, "trial count scale");
+        on($("#settingLurePressure"), "change", () => {
+          $("#lurePressureLabel").textContent = ["low", "standard", "high"][Number($("#settingLurePressure").value)] || "standard";
+        }, "lure pressure");
+        on($("#settingVfx"), "input", () => {
+          $("#vfxLabel").textContent = ["off", "low", "arcade", "max"][Number($("#settingVfx").value)] || "arcade";
+        }, "vfx setting");
+        on($("#settingThemeMode"), "change", () => {
+          $("#themeModeLabel").textContent = themeLabel($("#settingThemeMode").value);
+        }, "theme setting");
+        on($("#settingColorMode"), "change", previewColorSettingsFromForm, "color mode");
+        on($("#settingColorHue"), "input", previewColorSettingsFromForm, "color hue");
+        on($("#settingColorCode"), "input", previewColorSettingsFromForm, "color code");
+        on($("#settingColorHash"), "input", previewColorSettingsFromForm, "color hash");
+        on($("#settingGuiMode"), "change", () => {
+          $("#guiModeLabel").textContent = $("#settingGuiMode").value;
+        }, "gui mode setting");
+        on($("#terminalRun"), "click", () => {
+          runTerminalCommand($("#terminalInput").value);
+          $("#terminalInput").value = "";
+          updateTerminalSuggest();
+          $("#terminalInput").focus();
+        }, "terminal run");
+        on($("#terminalInput"), "keydown", (event) => {
+          if (event.key === "Tab") {
+            event.preventDefault();
+            completeTerminalInput();
+            return;
+          }
+          if (event.key === "ArrowUp") {
+            event.preventDefault();
+            recallTerminalHistory(-1);
+            return;
+          }
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            recallTerminalHistory(1);
+            return;
+          }
+          if (event.key !== "Enter") return;
+          runTerminalCommand($("#terminalInput").value);
+          $("#terminalInput").value = "";
+          updateTerminalSuggest();
+        }, "terminal input");
+        on($("#terminalInput"), "input", updateTerminalSuggest, "terminal suggest");
+        on($("#terminalHelp"), "click", terminalHelp, "terminal help");
+        on($("#terminalClear"), "click", () => {
+          $("#terminalOutput").innerHTML = "";
+        }, "terminal clear");
+        on($("#terminalApplyCustomize"), "click", () => {
+          const key = $("#terminalModuleSelect").value;
+          const difficulty = Number($("#terminalDifficultySelect").value);
+          state.modules[key].difficulty = difficulty;
+          state.modules[key].lastNote = "Difficulty set from terminal customizer.";
+          state.settings.theme = $("#terminalThemeSelect").value;
+          state.settings.vfx = Number($("#terminalVfxSelect").value);
+          state.settings.density = Number($("#terminalDensitySelect").value);
+          state.settings.problemDepth = Number($("#terminalDepthSelect").value);
+          state.settings.sessionLoad = Number($("#terminalLoadSelect").value);
+          state.settings.difficultyCap = Number($("#terminalCapSelect").value);
+          state.settings.answerTimerScale = Number($("#terminalTimerScaleSelect").value);
+          state.settings.trialCountScale = Number($("#terminalTrialScaleSelect").value);
+          state.settings.lurePressure = Number($("#terminalLurePressureSelect").value);
+          state.settings.volume = Number($("#terminalVolumeSelect").value) / 100;
+          state.settings.adaptive = $("#terminalAdaptiveToggle").checked;
+          state.settings.usePortedData = $("#terminalUsePortedToggle").checked;
+          state.settings.sfx = $("#terminalSfxToggle").checked;
+          state.settings.customCursor = $("#terminalCursorToggle").checked;
+          state.settings.identityVersion = IDENTITY_VERSION;
+          state.settings = sanitizeSettings(state.settings);
+          saveState();
+          renderAll();
+          terminalWrite(`Customizer applied: ${moduleInfo[key].label} d${difficulty}, theme ${themeLabel(state.settings.theme)}, density ${["compact", "standard", "spacious"][state.settings.density]}, depth ${["", "focused", "deep", "extreme"][state.settings.problemDepth]}, load ${["short", "standard", "heavy"][state.settings.sessionLoad]}, vfx ${["off", "low", "arcade", "max"][state.settings.vfx]}.`, "success");
+          playSfx("complete");
+        }, "terminal apply customize");
+        on($("#terminalStartSelected"), "click", () => startModuleFromTerminal($("#terminalModuleSelect").value), "terminal start selected");
+        on($("#terminalCopyBackup"), "click", () => {
+          copyBackupData();
+          terminalWrite("Backup JSON sent to clipboard when browser permissions allow it.", "system");
+        }, "terminal copy backup");
+        on($("#downloadBackup"), "click", () => {
+          downloadBackupData();
+          terminalWrite("Backup downloaded as a restorable JSON file.", "success");
+        }, "download backup");
+        on($("#backupFileInput"), "change", (event) => {
+          const file = event.target.files?.[0];
+          readFileAsText(file, 600000).then((text) => {
+            $("#terminalImportBox").value = text;
+            terminalWrite(`Loaded backup file: ${file.name}. Press Import to restore it.`, "system");
+            showToast("Backup file loaded");
+          }).catch((error) => {
+            terminalWrite(`Backup file read failed: ${error.message}`, "error");
+            showToast(error.message || "Backup file read failed");
+          }).finally(() => {
+            event.target.value = "";
+          });
+        }, "backup file input");
+        on($("#terminalImportBackup"), "click", () => {
+          const imported = importBackupFromText($("#terminalImportBox").value);
+          terminalWrite(imported ? "Backup imported and state re-rendered." : "Backup import failed. Check the JSON text.", imported ? "success" : "error");
+        }, "terminal import backup");
+        on($("#importPortedData"), "click", () => {
+          const imported = importPortedTrainingData($("#portedDataBox").value, $("#portedFormatSelect").value, $("#portedSourceSelect").value);
+          terminalWrite(imported ? "External training rows imported and linked to modules." : "External data import failed.", imported ? "success" : "error");
+        }, "terminal import ported");
+        on($("#portedFileInput"), "change", (event) => {
+          const file = event.target.files?.[0];
+          readFileAsText(file, 400000).then((text) => {
+            const format = importFormatFromFile(file, $("#portedFormatSelect").value);
+            $("#portedDataBox").value = text;
+            if ($("#portedFormatSelect").value === "auto" && format !== "auto") $("#portedFormatSelect").value = format;
+            const imported = importPortedTrainingData(text, format, $("#portedSourceSelect").value);
+            terminalWrite(imported ? `Imported external file: ${file.name}.` : `External file loaded but no usable rows were found: ${file.name}.`, imported ? "success" : "error");
+          }).catch((error) => {
+            terminalWrite(`External file read failed: ${error.message}`, "error");
+            showToast(error.message || "External file read failed");
+          }).finally(() => {
+            event.target.value = "";
+          });
+        }, "ported file input");
+        on($("#downloadPortedData"), "click", () => {
+          downloadPortedData();
+          terminalWrite("Imported external rows exported as a local JSON file.", "success");
+        }, "download ported data");
+        on($("#clearPortedData"), "click", () => {
+          clearPortedTrainingData();
+          terminalWrite("Imported external rows cleared. Local app sessions remain.", "success");
+        }, "terminal clear ported");
+        $$("[data-terminal-command]").forEach((button) => {
+          on(button, "click", () => {
+            $("#terminalInput").value = button.dataset.terminalCommand;
+            runTerminalCommand(button.dataset.terminalCommand);
+            $("#terminalInput").value = "";
+            updateTerminalSuggest();
+          }, `terminal quick ${button.dataset.terminalCommand}`);
+        });
+        $$("[data-sfx-test]").forEach((button) => on(button, "click", () => playSfx(button.dataset.sfxTest), `sfx ${button.dataset.sfxTest}`));
+        on($("#memoryGrid"), "pointermove", (event) => {
+          if (state.settings.lowMotion) return;
+          const grid = $("#memoryGrid");
+          const rect = grid.getBoundingClientRect();
+          const x = ((event.clientX - rect.left) / Math.max(1, rect.width) - 0.5) * 8;
+          const y = ((event.clientY - rect.top) / Math.max(1, rect.height) - 0.5) * -8;
+          grid.style.setProperty("--tilt-y", `${clamp(x, -4, 4)}deg`);
+          grid.style.setProperty("--tilt-x", `${clamp(y, -4, 4)}deg`);
+        }, "memory tilt");
+        on($("#memoryGrid"), "pointerleave", () => {
+          const grid = $("#memoryGrid");
+          grid.style.setProperty("--tilt-y", "0deg");
+          grid.style.setProperty("--tilt-x", "0deg");
+        }, "memory tilt reset");
+        on(window, "scroll", updateTopbarScrollState, "topbar scroll");
+        on(document, "pointerdown", (event) => {
+          armAudio();
+          setPointerFromEvent(event);
+          $("#customCursor").classList.add("is-pressing");
+        }, "pointer down");
+        on(document, "pointerup", (event) => {
+          setPointerFromEvent(event);
+          $("#customCursor").classList.remove("is-pressing");
+        }, "pointer up");
+        on(document, "pointermove", setPointerFromEvent, "pointer move");
+        on(document, "pointerover", setPointerFromEvent, "pointer over");
+        on(document, "pointerleave", () => {
+          pointerState.visible = false;
+          scheduleCustomCursorSync();
+        }, "pointer leave");
+        on(window, "scroll", scheduleCustomCursorSync, "cursor scroll");
+        on(window, "resize", scheduleCustomCursorSync, "cursor resize");
+        on(window, "blur", () => {
+          pointerState.visible = false;
+          scheduleCustomCursorSync();
+        }, "cursor blur");
+      }
+
+      bindEvents();
+      setupCanvas();
+      setupVfx();
+      initializeTerminal();
+      generateCreativePrompt();
+      generateAnalogyChallenge();
+      renderAll();
+      renderMemoryCard();
+      applySettings();
+      updateTopbarScrollState();
+      saveState();
